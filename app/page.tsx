@@ -205,16 +205,19 @@ export default function Home() {
         ]),
       );
 
-      setEditingNarrativeId(savedNarrative.id);
-      setForm({
-        title: savedNarrative.title,
-        content: savedNarrative.content,
-        tagIds: savedNarrative.tags.map((tag) => tag.id),
-      });
-
-      setStatusMessage(
-        method === "POST" ? "Narrative template created." : "Narrative template updated.",
-      );
+      if (method === "POST") {
+        setEditingNarrativeId(null);
+        setForm(makeEmptyForm());
+        setStatusMessage("Narrative template created.");
+      } else {
+        setEditingNarrativeId(savedNarrative.id);
+        setForm({
+          title: savedNarrative.title,
+          content: savedNarrative.content,
+          tagIds: savedNarrative.tags.map((tag) => tag.id),
+        });
+        setStatusMessage("Narrative template updated.");
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Could not save this narrative template.",
@@ -304,6 +307,17 @@ export default function Home() {
       setErrorMessage(
         error instanceof Error ? error.message : "Could not delete this narrative template.",
       );
+    }
+  }
+
+  async function handleNarrativeCopy(content: string) {
+    setErrorMessage(null);
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setStatusMessage("Narrative copied to clipboard.");
+    } catch {
+      setErrorMessage("Could not copy narrative to clipboard.");
     }
   }
 
@@ -488,6 +502,15 @@ export default function Home() {
               filteredNarratives.map((narrative) => (
                 <div
                   key={narrative.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => beginEditingNarrative(narrative)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      beginEditingNarrative(narrative);
+                    }
+                  }}
                   className={`rounded-xl border p-4 transition ${
                     editingNarrativeId === narrative.id
                       ? "border-cyan-500 bg-cyan-50 shadow-sm"
@@ -495,20 +518,29 @@ export default function Home() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => beginEditingNarrative(narrative)}
-                      className="text-left"
-                    >
-                      <h3 className="text-base font-semibold text-slate-900">{narrative.title}</h3>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleNarrativeDelete(narrative.id)}
-                      className="rounded-lg border border-rose-200 px-2 py-1 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
-                    >
-                      Delete
-                    </button>
+                    <h3 className="text-base font-semibold text-slate-900">{narrative.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleNarrativeCopy(narrative.content);
+                        }}
+                        className="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-medium text-cyan-700 transition hover:bg-cyan-50"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleNarrativeDelete(narrative.id);
+                        }}
+                        className="rounded-lg border border-rose-200 px-2 py-1 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
 
                   <p className="mt-2 max-h-32 overflow-hidden whitespace-pre-line text-sm text-slate-600">
