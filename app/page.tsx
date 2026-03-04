@@ -895,7 +895,7 @@ export default function Home() {
                     </div>
                   ) : (
                     <>
-                      <p className='mt-2 max-h-32 overflow-hidden whitespace-pre-line text-sm text-slate-600'>
+                      <p className='mt-2 max-h-56 overflow-y-auto whitespace-pre-line rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600'>
                         {narrative.content}
                       </p>
 
