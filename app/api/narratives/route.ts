@@ -4,6 +4,7 @@ import {
   NARRATIVE_SELECT,
   type NarrativeRow,
 } from "@/lib/narrativeData";
+import { hashLockPassword, isValidLockPassword } from "@/lib/lockPassword";
 import { parseNarrativeWritePayload } from "@/lib/narrativePayload";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -76,6 +77,14 @@ export async function POST(request: Request) {
     return jsonError(parsed.error ?? "Invalid request body.");
   }
 
+  const input = payload as { isLocked?: unknown; lockPassword?: unknown };
+  const isLocked = input.isLocked === true;
+  const lockPassword = typeof input.lockPassword === "string" ? input.lockPassword : "";
+
+  if (isLocked && !isValidLockPassword(lockPassword)) {
+    return jsonError("Lock password must be at least 4 characters.", 400);
+  }
+
   try {
     const tagValidation = await validateTagIds(parsed.data.tagIds);
 
@@ -90,6 +99,8 @@ export async function POST(request: Request) {
       .insert({
         title: parsed.data.title,
         content: parsed.data.content,
+        is_locked: isLocked,
+        lock_password_hash: isLocked ? hashLockPassword(lockPassword) : null,
       })
       .select("id")
       .single();

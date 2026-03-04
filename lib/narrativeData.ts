@@ -6,6 +6,7 @@ export const NARRATIVE_SELECT = `
   content,
   created_at,
   updated_at,
+  is_locked,
   narrative_tags (
     tags (
       id,
@@ -45,6 +46,7 @@ export type NarrativeRow = {
   content: string;
   created_at: string;
   updated_at: string;
+  is_locked: boolean;
   narrative_tags: NarrativeTagRelation[] | null;
 };
 
@@ -63,6 +65,7 @@ export function mapNarrativeRow(row: NarrativeRow): Narrative {
     content: row.content,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    is_locked: row.is_locked,
     tags,
   };
 }

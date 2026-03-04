@@ -9,5 +9,6 @@ export type Narrative = {
   content: string;
   created_at: string;
   updated_at: string;
+  is_locked: boolean;
   tags: Tag[];
 };

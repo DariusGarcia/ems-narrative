@@ -35,9 +35,10 @@ Set values in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-3. Create tables in Supabase by running:
+3. Create tables in Supabase by running migrations in order:
 
 - `supabase/migrations/20260304140500_init_ems_narratives.sql`
+- `supabase/migrations/20260304152000_add_template_lock.sql`
 
 4. Start the app:
 

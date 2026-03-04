@@ -4,6 +4,7 @@ import {
   NARRATIVE_SELECT,
   type NarrativeRow,
 } from "@/lib/narrativeData";
+import { hashLockPassword } from "@/lib/lockPassword";
 import { parseNarrativeWritePayload } from "@/lib/narrativePayload";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -67,6 +68,10 @@ export async function PUT(request: Request, context: RouteContext) {
     return jsonError(parsed.error ?? "Invalid request body.");
   }
 
+  const input = payload as { unlockPassword?: unknown };
+  const unlockPassword =
+    typeof input.unlockPassword === "string" ? input.unlockPassword.trim() : "";
+
   try {
     const tagValidation = await validateTagIds(parsed.data.tagIds);
 
@@ -75,6 +80,27 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    const { data: existingNarrative, error: existingNarrativeError } = await supabase
+      .from("narratives")
+      .select("id, is_locked, lock_password_hash")
+      .eq("id", narrativeId)
+      .maybeSingle();
+
+    if (existingNarrativeError) {
+      return jsonError("Failed to update narrative.", 500);
+    }
+
+    if (!existingNarrative) {
+      return jsonError("Narrative not found.", 404);
+    }
+
+    if (
+      existingNarrative.is_locked &&
+      existingNarrative.lock_password_hash !== hashLockPassword(unlockPassword)
+    ) {
+      return jsonError("Incorrect password for locked template.", 403);
+    }
 
     const { data: updatedNarrative, error: updateError } = await supabase
       .from("narratives")
@@ -134,7 +160,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const narrativeId = await getNarrativeId(context);
 
   if (!narrativeId) {
@@ -143,20 +169,49 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const supabase = getSupabaseAdmin();
+    const requestBody = (await request.text()).trim();
+    let payload: { unlockPassword?: unknown } = {};
 
-    const { data: deletedNarrative, error } = await supabase
+    if (requestBody) {
+      try {
+        payload = JSON.parse(requestBody) as { unlockPassword?: unknown };
+      } catch {
+        return jsonError("Invalid JSON body.");
+      }
+    }
+
+    const unlockPassword =
+      typeof payload.unlockPassword === "string" ? payload.unlockPassword.trim() : "";
+
+    const { data: existingNarrative, error: existingNarrativeError } = await supabase
       .from("narratives")
-      .delete()
+      .select("id, is_locked, lock_password_hash")
       .eq("id", narrativeId)
-      .select("id")
       .maybeSingle();
 
-    if (error) {
+    if (existingNarrativeError) {
       return jsonError("Failed to delete narrative.", 500);
     }
 
-    if (!deletedNarrative) {
+    if (!existingNarrative) {
       return jsonError("Narrative not found.", 404);
+    }
+
+    if (
+      existingNarrative.is_locked &&
+      existingNarrative.lock_password_hash !== hashLockPassword(unlockPassword)
+    ) {
+      return jsonError("Incorrect password for locked template.", 403);
+    }
+
+    const { error } = await supabase
+      .from("narratives")
+      .delete()
+      .eq("id", narrativeId)
+      .select("id");
+
+    if (error) {
+      return jsonError("Failed to delete narrative.", 500);
     }
 
     return NextResponse.json({ success: true });
