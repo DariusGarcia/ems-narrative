@@ -207,47 +207,63 @@ export default function Home() {
     setErrorMessage(null)
   }
 
-  async function beginEditingNarrative(narrative: Narrative) {
-    if (narrative.is_locked && !unlockedPasswords[narrative.id]) {
-      const password = window.prompt(
-        `This template is locked. Enter password to edit "${narrative.title}".`,
-      )
+  async function ensureUnlockedForAction(
+    narrative: Narrative,
+    action: 'edit' | 'delete',
+  ): Promise<string | null> {
+    if (!narrative.is_locked) {
+      return ''
+    }
 
-      if (!password) {
-        return
-      }
+    const cachedPassword = unlockedPasswords[narrative.id]
+    if (cachedPassword) {
+      return cachedPassword
+    }
 
-      const unlockResponse = await fetch(
-        `/api/narratives/${narrative.id}/unlock`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ password }),
-        },
-      )
+    const password = window.prompt(
+      `This template is locked. Enter password to ${action} "${narrative.title}".`,
+    )
 
-      const unlockPayload = await readJson<ApiError>(unlockResponse)
+    if (!password) {
+      return null
+    }
 
-      if (!unlockResponse.ok) {
-        setErrorMessage(
-          unlockPayload.error ?? 'Incorrect password for locked template.',
-        )
-        return
-      }
+    const unlockResponse = await fetch(`/api/narratives/${narrative.id}/unlock`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    })
 
-      setUnlockedPasswords((current) => ({
-        ...current,
-        [narrative.id]: password,
-      }))
+    const unlockPayload = await readJson<ApiError>(unlockResponse)
+
+    if (!unlockResponse.ok) {
+      setErrorMessage(unlockPayload.error ?? 'Incorrect password for locked template.')
+      return null
+    }
+
+    setUnlockedPasswords((current) => ({
+      ...current,
+      [narrative.id]: password,
+    }))
+
+    if (action === 'edit') {
       setStatusMessage('Template unlocked for editing.')
-      setErrorMessage(null)
+    }
+
+    return password
+  }
+
+  async function beginEditingNarrative(narrative: Narrative) {
+    const unlockPassword = await ensureUnlockedForAction(narrative, 'edit')
+
+    if (unlockPassword === null) {
+      return
     }
 
     setEditingCardNarrativeId(narrative.id)
     setEditingCardForm(makeEditFormFromNarrative(narrative))
-    setStatusMessage(null)
     setErrorMessage(null)
   }
 
@@ -484,30 +500,17 @@ export default function Home() {
   }
 
   async function handleNarrativeDelete(narrative: Narrative) {
-    if (!window.confirm('Delete this narrative template?')) {
-      return
-    }
-
     setStatusMessage(null)
     setErrorMessage(null)
 
     try {
-      let unlockPassword = ''
+      const unlockPassword = await ensureUnlockedForAction(narrative, 'delete')
+      if (unlockPassword === null) {
+        return
+      }
 
-      if (narrative.is_locked) {
-        unlockPassword = unlockedPasswords[narrative.id] ?? ''
-
-        if (!unlockPassword) {
-          const entered = window.prompt(
-            `This template is locked. Enter password to delete "${narrative.title}".`,
-          )
-
-          if (!entered) {
-            return
-          }
-
-          unlockPassword = entered
-        }
+      if (!window.confirm('Delete this narrative template?')) {
+        return
       }
 
       const response = await fetch(`/api/narratives/${narrative.id}`, {
@@ -521,6 +524,14 @@ export default function Home() {
       const payload = await readJson<ApiError>(response)
 
       if (!response.ok) {
+        if (response.status === 403) {
+          setUnlockedPasswords((current) => {
+            const rest = { ...current }
+            delete rest[narrative.id]
+            return rest
+          })
+        }
+
         throw new Error(
           payload.error ?? 'Could not delete this narrative template.',
         )
