@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const input = payload as { name?: unknown };
-  const name = typeof input.name === "string" ? input.name.trim().toLowerCase() : "";
+  const name = typeof input.name === "string" ? input.name.trim() : "";
 
   if (!name) {
     return jsonError("Tag name is required.");
@@ -43,6 +43,20 @@ export async function POST(request: Request) {
   try {
     const supabase = getSupabaseAdmin();
 
+    const { data: existingTag, error: existingTagError } = await supabase
+      .from("tags")
+      .select("id, name")
+      .ilike("name", name)
+      .maybeSingle();
+
+    if (existingTagError) {
+      return jsonError("Failed to save tag.", 500);
+    }
+
+    if (existingTag) {
+      return NextResponse.json({ tag: existingTag, duplicate: true });
+    }
+
     const { data, error } = await supabase
       .from("tags")
       .insert({ name })
@@ -50,17 +64,17 @@ export async function POST(request: Request) {
       .single();
 
     if (error?.code === "23505") {
-      const { data: existingTag, error: existingTagError } = await supabase
+      const { data: duplicateTag, error: duplicateTagError } = await supabase
         .from("tags")
         .select("id, name")
-        .eq("name", name)
+        .ilike("name", name)
         .single();
 
-      if (existingTagError || !existingTag) {
+      if (duplicateTagError || !duplicateTag) {
         return jsonError("Failed to save tag.", 500);
       }
 
-      return NextResponse.json({ tag: existingTag, duplicate: true });
+      return NextResponse.json({ tag: duplicateTag, duplicate: true });
     }
 
     if (error || !data) {

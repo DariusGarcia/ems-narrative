@@ -74,7 +74,9 @@ function sortNarrativesByUpdatedAt(narratives: Narrative[]): Narrative[] {
 }
 
 function sortTagsByName(tags: Tag[]): Tag[] {
-  return [...tags].sort((a, b) => a.name.localeCompare(b.name))
+  return [...tags].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  )
 }
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -105,6 +107,7 @@ export default function Home() {
   const [unlockedPasswords, setUnlockedPasswords] = useState<
     Record<string, string>
   >({})
+  const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -148,6 +151,30 @@ export default function Home() {
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!copiedNarrativeId) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopiedNarrativeId((current) =>
+        current === copiedNarrativeId ? null : current,
+      )
+    }, 2500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [copiedNarrativeId])
 
   const filteredNarratives = useMemo(() => {
     if (selectedFilterTagIds.length === 0) {
@@ -524,11 +551,12 @@ export default function Home() {
     }
   }
 
-  async function handleNarrativeCopy(content: string) {
+  async function handleNarrativeCopy(narrativeId: string, content: string) {
     setErrorMessage(null)
 
     try {
       await navigator.clipboard.writeText(content)
+      setCopiedNarrativeId(narrativeId)
       setStatusMessage('Narrative copied to clipboard.')
     } catch {
       setErrorMessage('Could not copy narrative to clipboard.')
@@ -786,6 +814,11 @@ export default function Home() {
                       ? 'border-cyan-500 bg-cyan-50 shadow-sm'
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}>
+                  {copiedNarrativeId === narrative.id && (
+                    <div className='mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800'>
+                      Copied to clipboard
+                    </div>
+                  )}
                   <div className='flex items-start justify-between gap-3'>
                     <h3 className='text-base font-semibold text-slate-900'>
                       {narrative.title}
@@ -800,7 +833,7 @@ export default function Home() {
                         type='button'
                         onClick={(event) => {
                           event.stopPropagation()
-                          void handleNarrativeCopy(narrative.content)
+                          void handleNarrativeCopy(narrative.id, narrative.content)
                         }}
                         className='rounded-lg border border-cyan-200 px-2 py-1 text-xs font-medium text-cyan-700 transition hover:bg-cyan-50'>
                         Copy
