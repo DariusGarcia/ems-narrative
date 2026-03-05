@@ -71,6 +71,25 @@ export async function GET(request: Request) {
     }
 
     const narratives = ((data ?? []) as NarrativeRow[]).map(mapNarrativeRow);
+    const narrativeIds = narratives.map((narrative) => narrative.id);
+
+    if (sessionUser && narrativeIds.length > 0) {
+      const { data: favorites, error: favoritesError } = await supabase
+        .from("narrative_favorites")
+        .select("narrative_id")
+        .eq("user_id", sessionUser.id)
+        .in("narrative_id", narrativeIds);
+
+      if (favoritesError) {
+        return jsonError("Failed to load favorite templates.", 500);
+      }
+
+      const favoriteIds = new Set((favorites ?? []).map((favorite) => favorite.narrative_id));
+
+      for (const narrative of narratives) {
+        narrative.is_favorited = favoriteIds.has(narrative.id);
+      }
+    }
 
     return NextResponse.json({ narratives, user: sessionUser });
   } catch {

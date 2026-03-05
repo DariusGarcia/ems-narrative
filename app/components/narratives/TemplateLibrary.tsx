@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Narrative, Tag } from '@/lib/types'
-import type { NarrativeEditForm } from '@/app/components/narratives/types'
+import type {
+  NarrativeEditForm,
+  SessionUser,
+} from '@/app/components/narratives/types'
 
 type Props = {
   tags: Tag[]
@@ -11,9 +14,12 @@ type Props = {
   tagUsageCount: Record<string, number>
   selectedFilterTagIds: string[]
   setSelectedFilterTagIds: (updater: (current: string[]) => string[]) => void
+  showFavoritesOnly: boolean
+  setShowFavoritesOnly: (updater: (current: boolean) => boolean) => void
   searchTerm: string
   setSearchTerm: (value: string) => void
   isLoading: boolean
+  sessionUser: SessionUser | null
   editingCardNarrativeId: string | null
   editingCardForm: NarrativeEditForm | null
   setEditingCardForm: (
@@ -22,8 +28,13 @@ type Props = {
   setEditingCardNarrativeId: (id: string | null) => void
   isSavingCardNarrative: boolean
   copiedNarrativeId: string | null
+  favoritePendingIds: Record<string, boolean>
   beginEditingNarrative: (narrative: Narrative) => Promise<void>
   handleNarrativeCopy: (narrativeId: string, content: string) => Promise<void>
+  handleNarrativeFavoriteToggle: (
+    narrativeId: string,
+    nextFavoritedState: boolean,
+  ) => Promise<void>
   handleNarrativeDelete: (narrative: Narrative) => Promise<void>
   toggleEditingCardTag: (tagId: string) => void
   handleInlineNarrativeSave: (narrativeId: string) => Promise<void>
@@ -36,17 +47,22 @@ export function TemplateLibrary({
   tagUsageCount,
   selectedFilterTagIds,
   setSelectedFilterTagIds,
+  showFavoritesOnly,
+  setShowFavoritesOnly,
   searchTerm,
   setSearchTerm,
   isLoading,
+  sessionUser,
   editingCardNarrativeId,
   editingCardForm,
   setEditingCardForm,
   setEditingCardNarrativeId,
   isSavingCardNarrative,
   copiedNarrativeId,
+  favoritePendingIds,
   beginEditingNarrative,
   handleNarrativeCopy,
+  handleNarrativeFavoriteToggle,
   handleNarrativeDelete,
   toggleEditingCardTag,
   handleInlineNarrativeSave,
@@ -133,6 +149,18 @@ export function TemplateLibrary({
           }`}>
           All templates ({narratives.length})
         </button>
+        {sessionUser && (
+          <button
+            type='button'
+            onClick={() => setShowFavoritesOnly((current) => !current)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              showFavoritesOnly
+                ? 'border-amber-600 bg-amber-500 text-white'
+                : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+            }`}>
+            Favorites
+          </button>
+        )}
         {areFilterTagsMinimized && selectedFilterTagIds.length > 0 && (
           <span className='rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800'>
             {selectedFilterTagIds.length} tag filter
@@ -210,6 +238,35 @@ export function TemplateLibrary({
                   {narrative.title}
                 </h3>
                 <div className='flex flex-wrap items-center gap-2'>
+                  {sessionUser && (
+                    <button
+                      type='button'
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void handleNarrativeFavoriteToggle(
+                          narrative.id,
+                          !narrative.is_favorited,
+                        )
+                      }}
+                      disabled={favoritePendingIds[narrative.id] === true}
+                      aria-label={
+                        narrative.is_favorited
+                          ? 'Remove from favorites'
+                          : 'Add to favorites'
+                      }
+                      title={
+                        narrative.is_favorited
+                          ? 'Remove from favorites'
+                          : 'Add to favorites'
+                      }
+                      className={`rounded-lg border px-2 py-1 text-xs font-medium transition ${
+                        narrative.is_favorited
+                          ? 'border-amber-300 bg-amber-100 text-amber-900'
+                          : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
+                      } disabled:cursor-not-allowed disabled:opacity-60`}>
+                      {narrative.is_favorited ? '★ Favorited' : '☆ Favorite'}
+                    </button>
+                  )}
                   {narrative.owner_id && (
                     <span className='rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-800'>
                       Personal

@@ -29,6 +29,7 @@ export function useNarrativeManager() {
   const [narratives, setNarratives] = useState<Narrative[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedFilterTagIds, setSelectedFilterTagIds] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingCardNarrativeId, setEditingCardNarrativeId] = useState<string | null>(null);
   const [editingCardForm, setEditingCardForm] = useState<NarrativeEditForm | null>(null);
@@ -49,6 +50,7 @@ export function useNarrativeManager() {
   const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
   const [unlockedPasswords, setUnlockedPasswords] = useState<Record<string, string>>({});
   const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null);
+  const [favoritePendingIds, setFavoritePendingIds] = useState<Record<string, boolean>>({});
   const [selectedAutoCallTypes, setSelectedAutoCallTypes] = useState<AutoCallType[]>([]);
   const [autoGenerateInput, setAutoGenerateInput] = useState<AutoGenerateInput>({
     unit: "",
@@ -98,6 +100,7 @@ export function useNarrativeManager() {
       if (!narrativesPayload.user) {
         setTemplateView("feed");
         setCreateTarget("feed");
+        setShowFavoritesOnly(false);
       }
     } catch (error) {
       setErrorMessage(
@@ -152,8 +155,9 @@ export function useNarrativeManager() {
     return narratives.filter((narrative) => {
       const narrativeTagIds = new Set(narrative.tags.map((tag) => tag.id));
       const matchesSelectedTags = selectedFilterTagIds.every((tagId) => narrativeTagIds.has(tagId));
+      const matchesFavorites = !showFavoritesOnly || narrative.is_favorited;
 
-      if (!matchesSelectedTags) {
+      if (!matchesSelectedTags || !matchesFavorites) {
         return false;
       }
 
@@ -167,7 +171,7 @@ export function useNarrativeManager() {
 
       return searchableText.includes(normalizedSearchTerm);
     });
-  }, [narratives, selectedFilterTagIds, searchTerm]);
+  }, [narratives, selectedFilterTagIds, searchTerm, showFavoritesOnly]);
 
   const tagUsageCount = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -669,6 +673,40 @@ export function useNarrativeManager() {
     }
   }
 
+  async function handleNarrativeFavoriteToggle(narrativeId: string, nextFavoritedState: boolean) {
+    setStatusMessage(null);
+    setErrorMessage(null);
+    setFavoritePendingIds((current) => ({ ...current, [narrativeId]: true }));
+
+    try {
+      const response = await fetch(`/api/narratives/${narrativeId}/favorite`, {
+        method: nextFavoritedState ? "POST" : "DELETE",
+      });
+
+      const payload = await readJson<ApiError>(response);
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not update favorite.");
+      }
+
+      setNarratives((current) =>
+        current.map((narrative) =>
+          narrative.id === narrativeId
+            ? { ...narrative, is_favorited: nextFavoritedState }
+            : narrative,
+        ),
+      );
+      setStatusMessage(nextFavoritedState ? "Added to favorites." : "Removed from favorites.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not update favorite.");
+    } finally {
+      setFavoritePendingIds((current) => {
+        const next = { ...current };
+        delete next[narrativeId];
+        return next;
+      });
+    }
+  }
+
   async function handleDraftNarrativeCopy() {
     setErrorMessage(null);
 
@@ -691,6 +729,8 @@ export function useNarrativeManager() {
     tags,
     selectedFilterTagIds,
     setSelectedFilterTagIds,
+    showFavoritesOnly,
+    setShowFavoritesOnly,
     searchTerm,
     setSearchTerm,
     editingCardNarrativeId,
@@ -720,6 +760,7 @@ export function useNarrativeManager() {
     authMode,
     setAuthMode,
     copiedNarrativeId,
+    favoritePendingIds,
     selectedAutoCallTypes,
     autoGenerateInput,
     filteredNarratives,
@@ -738,6 +779,7 @@ export function useNarrativeManager() {
     handleLogout,
     handleNarrativeDelete,
     handleNarrativeCopy,
+    handleNarrativeFavoriteToggle,
     handleDraftNarrativeCopy,
   };
 }

@@ -69,6 +69,7 @@ export function mapNarrativeRow(row: NarrativeRow): Narrative {
     updated_at: row.updated_at,
     is_locked: row.is_locked,
     owner_id: row.owner_id,
+    is_favorited: false,
     tags,
   };
 }
