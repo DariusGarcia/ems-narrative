@@ -8,6 +8,14 @@ import { useNarrativeManager } from "@/app/components/narratives/useNarrativeMan
 export default function Home() {
   const model = useNarrativeManager();
 
+  const openSignInFromFavoritePrompt = () => {
+    model.closeFavoriteSignInPrompt();
+    model.setAuthMode("login");
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       <header className="rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-cyan-900 p-6 text-white shadow-xl">
@@ -46,6 +54,68 @@ export default function Home() {
         </section>
       )}
 
+      {model.favoriteSignInPrompt.visible && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-[1px]"
+          role="dialog"
+          aria-modal="true"
+          onClick={model.closeFavoriteSignInPrompt}
+        >
+          <div className="absolute inset-0 flex items-center justify-center p-4 sm:hidden">
+            <div
+              className="w-full max-w-sm rounded-xl border border-cyan-200 bg-cyan-50 p-3 shadow-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <p className="text-sm text-cyan-900">Sign in to add templates to favorites.</p>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={openSignInFromFavoritePrompt}
+                  className="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-cyan-600"
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={model.closeFavoriteSignInPrompt}
+                  className="rounded-lg border border-cyan-300 bg-white px-3 py-1.5 text-xs font-medium text-cyan-800 transition hover:border-cyan-400"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="absolute hidden max-w-[90vw] rounded-xl border border-cyan-200 bg-cyan-50 p-3 shadow-xl sm:block"
+            style={{
+              left: model.favoriteSignInPrompt.x,
+              top: model.favoriteSignInPrompt.y,
+              transform: "translate(-50%, -50%)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-sm text-cyan-900">Sign in to add templates to favorites.</p>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={openSignInFromFavoritePrompt}
+                className="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-cyan-600"
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={model.closeFavoriteSignInPrompt}
+                className="rounded-lg border border-cyan-300 bg-white px-3 py-1.5 text-xs font-medium text-cyan-800 transition hover:border-cyan-400"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <TemplateCreatorCard
           sessionUser={model.sessionUser}
@@ -58,6 +128,7 @@ export default function Home() {
           setNewTagName={model.setNewTagName}
           isSavingNarrative={model.isSavingNarrative}
           isSavingTag={model.isSavingTag}
+          errorMessage={model.errorMessage}
           resetFormForNewNarrative={model.resetFormForNewNarrative}
           toggleNarrativeTag={model.toggleNarrativeTag}
           selectedAutoCallTypes={model.selectedAutoCallTypes}
@@ -93,6 +164,7 @@ export default function Home() {
           beginEditingNarrative={model.beginEditingNarrative}
           handleNarrativeCopy={model.handleNarrativeCopy}
           handleNarrativeFavoriteToggle={model.handleNarrativeFavoriteToggle}
+          handleFavoriteRequiresSignIn={model.handleFavoriteRequiresSignIn}
           handleNarrativeDelete={model.handleNarrativeDelete}
           toggleEditingCardTag={model.toggleEditingCardTag}
           handleInlineNarrativeSave={model.handleInlineNarrativeSave}

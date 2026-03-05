@@ -51,6 +51,15 @@ export function useNarrativeManager() {
   const [unlockedPasswords, setUnlockedPasswords] = useState<Record<string, string>>({});
   const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null);
   const [favoritePendingIds, setFavoritePendingIds] = useState<Record<string, boolean>>({});
+  const [favoriteSignInPrompt, setFavoriteSignInPrompt] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+  });
   const [selectedAutoCallTypes, setSelectedAutoCallTypes] = useState<AutoCallType[]>([]);
   const [autoGenerateInput, setAutoGenerateInput] = useState<AutoGenerateInput>({
     unit: "",
@@ -148,6 +157,30 @@ export function useNarrativeManager() {
 
     return () => window.clearTimeout(timeoutId);
   }, [statusMessage]);
+
+  useEffect(() => {
+    if (errorMessage !== "Title and narrative text are both required.") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setErrorMessage((current) =>
+        current === "Title and narrative text are both required." ? null : current,
+      );
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (errorMessage !== "Title and narrative text are both required.") {
+      return;
+    }
+
+    if (form.title.trim().length > 0 || form.content.trim().length > 0) {
+      setErrorMessage(null);
+    }
+  }, [errorMessage, form.title, form.content]);
 
   const filteredNarratives = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -707,6 +740,20 @@ export function useNarrativeManager() {
     }
   }
 
+  function handleFavoriteRequiresSignIn(x: number, y: number) {
+    setStatusMessage(null);
+    setErrorMessage(null);
+    setFavoriteSignInPrompt({
+      visible: true,
+      x,
+      y,
+    });
+  }
+
+  function closeFavoriteSignInPrompt() {
+    setFavoriteSignInPrompt((current) => ({ ...current, visible: false }));
+  }
+
   async function handleDraftNarrativeCopy() {
     setErrorMessage(null);
 
@@ -761,6 +808,7 @@ export function useNarrativeManager() {
     setAuthMode,
     copiedNarrativeId,
     favoritePendingIds,
+    favoriteSignInPrompt,
     selectedAutoCallTypes,
     autoGenerateInput,
     filteredNarratives,
@@ -780,6 +828,8 @@ export function useNarrativeManager() {
     handleNarrativeDelete,
     handleNarrativeCopy,
     handleNarrativeFavoriteToggle,
+    handleFavoriteRequiresSignIn,
+    closeFavoriteSignInPrompt,
     handleDraftNarrativeCopy,
   };
 }

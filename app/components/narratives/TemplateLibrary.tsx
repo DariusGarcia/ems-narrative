@@ -35,6 +35,7 @@ type Props = {
     narrativeId: string,
     nextFavoritedState: boolean,
   ) => Promise<void>
+  handleFavoriteRequiresSignIn: (x: number, y: number) => void
   handleNarrativeDelete: (narrative: Narrative) => Promise<void>
   toggleEditingCardTag: (tagId: string) => void
   handleInlineNarrativeSave: (narrativeId: string) => Promise<void>
@@ -63,6 +64,7 @@ export function TemplateLibrary({
   beginEditingNarrative,
   handleNarrativeCopy,
   handleNarrativeFavoriteToggle,
+  handleFavoriteRequiresSignIn,
   handleNarrativeDelete,
   toggleEditingCardTag,
   handleInlineNarrativeSave,
@@ -238,35 +240,40 @@ export function TemplateLibrary({
                   {narrative.title}
                 </h3>
                 <div className='flex flex-wrap items-center gap-2'>
-                  {sessionUser && (
-                    <button
-                      type='button'
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        void handleNarrativeFavoriteToggle(
-                          narrative.id,
-                          !narrative.is_favorited,
-                        )
-                      }}
-                      disabled={favoritePendingIds[narrative.id] === true}
-                      aria-label={
-                        narrative.is_favorited
+                  <button
+                    type='button'
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      if (!sessionUser) {
+                        handleFavoriteRequiresSignIn(event.clientX, event.clientY)
+                        return
+                      }
+
+                      void handleNarrativeFavoriteToggle(
+                        narrative.id,
+                        !narrative.is_favorited,
+                      )
+                    }}
+                    disabled={sessionUser ? favoritePendingIds[narrative.id] === true : false}
+                    aria-label={
+                      narrative.is_favorited
+                        ? 'Remove from favorites'
+                        : 'Add to favorites'
+                    }
+                    title={
+                      sessionUser
+                        ? narrative.is_favorited
                           ? 'Remove from favorites'
                           : 'Add to favorites'
-                      }
-                      title={
-                        narrative.is_favorited
-                          ? 'Remove from favorites'
-                          : 'Add to favorites'
-                      }
-                      className={`rounded-lg border px-2 py-1 text-xs font-medium transition ${
-                        narrative.is_favorited
-                          ? 'border-amber-300 bg-amber-100 text-amber-900'
-                          : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
-                      } disabled:cursor-not-allowed disabled:opacity-60`}>
-                      {narrative.is_favorited ? '★ Favorited' : '☆ Favorite'}
-                    </button>
-                  )}
+                        : 'Sign in to add favorites'
+                    }
+                    className={`rounded-lg border px-2 py-1 text-xs font-medium transition ${
+                      narrative.is_favorited
+                        ? 'border-amber-300 bg-amber-100 text-amber-900'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
+                    } disabled:cursor-not-allowed disabled:opacity-60`}>
+                    {narrative.is_favorited ? '★ Favorited' : '☆ Favorite'}
+                  </button>
                   {narrative.owner_id && (
                     <span className='rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-800'>
                       Personal

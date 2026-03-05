@@ -23,6 +23,7 @@ type Props = {
   setNewTagName: (value: string) => void
   isSavingNarrative: boolean
   isSavingTag: boolean
+  errorMessage: string | null
   resetFormForNewNarrative: () => void
   toggleNarrativeTag: (tagId: string) => void
   selectedAutoCallTypes: AutoCallType[]
@@ -46,6 +47,7 @@ export function TemplateCreatorCard({
   setNewTagName,
   isSavingNarrative,
   isSavingTag,
+  errorMessage,
   resetFormForNewNarrative,
   toggleNarrativeTag,
   selectedAutoCallTypes,
@@ -487,6 +489,12 @@ export function TemplateCreatorCard({
             />
           )}
         </div>
+        {errorMessage === 'Title and narrative text are both required.' && (
+          <p className='rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800'>
+            Title and narrative text are both required.
+          </p>
+        )}
+
         <button
           type='submit'
           disabled={isSavingNarrative}
