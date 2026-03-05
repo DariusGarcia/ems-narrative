@@ -126,7 +126,9 @@ export default function Home() {
   const [unlockedPasswords, setUnlockedPasswords] = useState<
     Record<string, string>
   >({})
-  const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null)
+  const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(
+    null,
+  )
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -207,7 +209,9 @@ export default function Home() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      setStatusMessage((current) => (current === statusMessage ? null : current))
+      setStatusMessage((current) =>
+        current === statusMessage ? null : current,
+      )
     }, 2500)
 
     return () => window.clearTimeout(timeoutId)
@@ -282,18 +286,23 @@ export default function Home() {
       return null
     }
 
-    const unlockResponse = await fetch(`/api/narratives/${narrative.id}/unlock`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const unlockResponse = await fetch(
+      `/api/narratives/${narrative.id}/unlock`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
       },
-      body: JSON.stringify({ password }),
-    })
+    )
 
     const unlockPayload = await readJson<ApiError>(unlockResponse)
 
     if (!unlockResponse.ok) {
-      setErrorMessage(unlockPayload.error ?? 'Incorrect password for locked template.')
+      setErrorMessage(
+        unlockPayload.error ?? 'Incorrect password for locked template.',
+      )
       return null
     }
 
@@ -588,9 +597,13 @@ export default function Home() {
       setCreateTarget('mine')
       setAuthPassword('')
       setAuthMode(null)
-      setStatusMessage(mode === 'login' ? 'Signed in.' : 'Account created and signed in.')
+      setStatusMessage(
+        mode === 'login' ? 'Signed in.' : 'Account created and signed in.',
+      )
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Authentication failed.')
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Authentication failed.',
+      )
     } finally {
       setIsSubmittingAuth(false)
     }
@@ -711,7 +724,8 @@ export default function Home() {
                 Signed in as {sessionUser.username}
               </p>
               <p className='text-xs text-slate-600'>
-                You can switch between main feed templates and your personal templates.
+                You can switch between main feed templates and your personal
+                templates.
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -749,7 +763,8 @@ export default function Home() {
               Optional account for personal templates
             </p>
             <p className='text-xs text-slate-600'>
-              Without an account, you can still create and manage main feed templates.
+              Without an account, you can still create and manage main feed
+              templates.
             </p>
             {!authMode ? (
               <div className='flex flex-wrap gap-2'>
@@ -769,7 +784,9 @@ export default function Home() {
             ) : (
               <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
                 <p className='text-xs font-medium text-slate-700'>
-                  {authMode === 'login' ? 'Log in to your account' : 'Create a new account'}
+                  {authMode === 'login'
+                    ? 'Log in to your account'
+                    : 'Create a new account'}
                 </p>
                 <div className='flex flex-col gap-2 sm:flex-row'>
                   <input
@@ -869,7 +886,9 @@ export default function Home() {
 
             {sessionUser && (
               <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
-                <p className='text-sm font-medium text-slate-700'>Save destination</p>
+                <p className='text-sm font-medium text-slate-700'>
+                  Save destination
+                </p>
                 <div className='flex flex-wrap gap-2'>
                   <button
                     type='button'
@@ -1017,7 +1036,7 @@ export default function Home() {
               type='text'
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder='Search title, tags, or narrative text...'
+              placeholder='Search by title or tags...'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
           </div>
@@ -1113,7 +1132,10 @@ export default function Home() {
                         type='button'
                         onClick={(event) => {
                           event.stopPropagation()
-                          void handleNarrativeCopy(narrative.id, narrative.content)
+                          void handleNarrativeCopy(
+                            narrative.id,
+                            narrative.content,
+                          )
                         }}
                         className='rounded-lg border border-cyan-200 px-2 py-1 text-xs font-medium text-cyan-700 transition hover:bg-cyan-50'>
                         Copy
