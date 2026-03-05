@@ -5,6 +5,7 @@ import type { Narrative, Tag } from '@/lib/types'
 import type {
   NarrativeEditForm,
   SessionUser,
+  TemplateView,
 } from '@/app/components/narratives/types'
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
   setSelectedFilterTagIds: (updater: (current: string[]) => string[]) => void
   showFavoritesOnly: boolean
   setShowFavoritesOnly: (updater: (current: boolean) => boolean) => void
+  templateView: TemplateView
+  setTemplateView: (view: TemplateView) => void
   searchTerm: string
   setSearchTerm: (value: string) => void
   isLoading: boolean
@@ -50,6 +53,8 @@ export function TemplateLibrary({
   setSelectedFilterTagIds,
   showFavoritesOnly,
   setShowFavoritesOnly,
+  templateView,
+  setTemplateView,
   searchTerm,
   setSearchTerm,
   isLoading,
@@ -101,7 +106,33 @@ export function TemplateLibrary({
 
   return (
     <article className='p-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-surface sm:p-4 sm:shadow-md lg:p-5'>
-      <h2 className='text-lg font-semibold text-slate-900'>Template Library</h2>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <h2 className='text-lg font-semibold text-slate-900'>Template Library</h2>
+        {sessionUser && (
+          <div className='flex items-center gap-2'>
+            <button
+              type='button'
+              onClick={() => setTemplateView('feed')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                templateView === 'feed'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              }`}>
+              Main Feed
+            </button>
+            <button
+              type='button'
+              onClick={() => setTemplateView('mine')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                templateView === 'mine'
+                  ? 'bg-cyan-700 text-white'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              }`}>
+              My Templates
+            </button>
+          </div>
+        )}
+      </div>
 
       <div
         ref={stickySearchRef}
@@ -273,7 +304,7 @@ export function TemplateLibrary({
                         : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
                     } disabled:cursor-not-allowed disabled:opacity-60`}>
                     <span className='inline-flex items-center gap-1'>
-                      <span>{narrative.is_favorited ? '★' : '☆'}</span>
+                      <span>{narrative.is_favorited ? '\u2605' : '\u2606'}</span>
                       <span className='text-xs font-semibold text-slate-700'>
                         {narrative.favorite_count}
                       </span>
@@ -411,3 +442,4 @@ export function TemplateLibrary({
     </article>
   )
 }
+

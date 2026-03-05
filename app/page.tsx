@@ -150,6 +150,8 @@ export default function Home() {
           setSelectedFilterTagIds={model.setSelectedFilterTagIds}
           showFavoritesOnly={model.showFavoritesOnly}
           setShowFavoritesOnly={model.setShowFavoritesOnly}
+          templateView={model.templateView}
+          setTemplateView={model.setTemplateView}
           searchTerm={model.searchTerm}
           setSearchTerm={model.setSearchTerm}
           isLoading={model.isLoading}
