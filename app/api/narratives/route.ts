@@ -13,6 +13,55 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+const CREATE_NARRATIVE_RATE_LIMIT_MAX_REQUESTS = 3;
+const CREATE_NARRATIVE_RATE_LIMIT_WINDOW_MS = 60_000;
+
+const createNarrativeRateLimitStore = new Map<string, number[]>();
+
+function getClientIp(request: Request): string {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(",")[0]?.trim();
+    if (firstIp) {
+      return firstIp;
+    }
+  }
+
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  return "unknown";
+}
+
+function consumeCreateNarrativeRateLimit(identifier: string): {
+  allowed: boolean;
+  retryAfterSeconds: number;
+} {
+  const now = Date.now();
+  const windowStart = now - CREATE_NARRATIVE_RATE_LIMIT_WINDOW_MS;
+  const existingTimestamps = createNarrativeRateLimitStore.get(identifier) ?? [];
+  const recentTimestamps = existingTimestamps.filter((timestamp) => timestamp > windowStart);
+
+  if (recentTimestamps.length >= CREATE_NARRATIVE_RATE_LIMIT_MAX_REQUESTS) {
+    const oldestTimestamp = recentTimestamps[0] ?? now;
+    const retryAfterMs = Math.max(1_000, oldestTimestamp + CREATE_NARRATIVE_RATE_LIMIT_WINDOW_MS - now);
+
+    createNarrativeRateLimitStore.set(identifier, recentTimestamps);
+
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.ceil(retryAfterMs / 1_000),
+    };
+  }
+
+  recentTimestamps.push(now);
+  createNarrativeRateLimitStore.set(identifier, recentTimestamps);
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
 async function validateTagIds(tagIds: string[]) {
   if (tagIds.length === 0) {
     return { valid: true as const };
@@ -147,6 +196,25 @@ export async function POST(request: Request) {
 
   try {
     const sessionUser = await getSessionUserFromRequest(request);
+    const identifier = sessionUser?.id
+      ? `user:${sessionUser.id}`
+      : `ip:${getClientIp(request)}`;
+    const rateLimitResult = consumeCreateNarrativeRateLimit(identifier);
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many templates created. Please wait ${rateLimitResult.retryAfterSeconds} seconds and try again.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimitResult.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const createMine = templateScope.templateScope === "mine";
 
     if (createMine && !sessionUser) {
