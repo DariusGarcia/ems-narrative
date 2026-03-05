@@ -83,8 +83,10 @@ function replaceTemplateFields(
 ): string {
   return template.replace(/\[([^\]]+)\]/g, (fullMatch, key) => {
     const normalizedKey = String(key).trim().toLowerCase()
-    const replacement = values[normalizedKey]
-    return replacement && replacement.length > 0 ? replacement : fullMatch
+    if (Object.hasOwn(values, normalizedKey)) {
+      return values[normalizedKey]
+    }
+    return fullMatch
   })
 }
 
