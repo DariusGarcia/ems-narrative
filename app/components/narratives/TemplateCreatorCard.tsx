@@ -435,12 +435,19 @@ export function TemplateCreatorCard({
         </div>
 
         <div className='space-y-1'>
-          <div className='flex items-center justify-between gap-2'>
-            <label
-              htmlFor='content'
-              className='text-sm font-medium text-slate-700'>
-              Narrative text
-            </label>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <label
+                htmlFor='content'
+                className='text-sm font-medium text-slate-700'>
+                Narrative text
+              </label>
+              {selectedAutoCallTypes.length === 0 && (
+                <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
+                  Select at least one call type to auto-generate a narrative.
+                </p>
+              )}
+            </div>
             <button
               type='button'
               onClick={handleDraftNarrativeCopy}
