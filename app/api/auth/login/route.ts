@@ -3,6 +3,7 @@ import {
   authCookieOptions,
   AUTH_COOKIE_NAME,
   createSessionToken,
+  ensureAuthSessionSecretConfigured,
   isValidPassword,
   isValidUsername,
   normalizeUsername,
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    ensureAuthSessionSecretConfigured();
     const supabase = getSupabaseAdmin();
     const { data: user, error } = await supabase
       .from("users")

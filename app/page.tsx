@@ -102,6 +102,7 @@ export default function Home() {
   const [narratives, setNarratives] = useState<Narrative[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [selectedFilterTagIds, setSelectedFilterTagIds] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [editingCardNarrativeId, setEditingCardNarrativeId] = useState<
     string | null
   >(null)
@@ -213,15 +214,32 @@ export default function Home() {
   }, [statusMessage])
 
   const filteredNarratives = useMemo(() => {
-    if (selectedFilterTagIds.length === 0) {
-      return narratives
-    }
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase()
 
     return narratives.filter((narrative) => {
       const narrativeTagIds = new Set(narrative.tags.map((tag) => tag.id))
-      return selectedFilterTagIds.every((tagId) => narrativeTagIds.has(tagId))
+      const matchesSelectedTags = selectedFilterTagIds.every((tagId) =>
+        narrativeTagIds.has(tagId),
+      )
+
+      if (!matchesSelectedTags) {
+        return false
+      }
+
+      if (!normalizedSearchTerm) {
+        return true
+      }
+
+      const searchableText = [
+        narrative.title,
+        ...narrative.tags.map((tag) => tag.name),
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      return searchableText.includes(normalizedSearchTerm)
     })
-  }, [narratives, selectedFilterTagIds])
+  }, [narratives, selectedFilterTagIds, searchTerm])
 
   const tagUsageCount = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -993,6 +1011,16 @@ export default function Home() {
           <h2 className='text-lg font-semibold text-slate-900'>
             Template Library
           </h2>
+
+          <div className='mt-3'>
+            <input
+              type='text'
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder='Search title, tags, or narrative text...'
+              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            />
+          </div>
 
           <div className='mt-3 flex flex-wrap gap-2'>
             <button

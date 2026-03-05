@@ -33,6 +33,10 @@ function getSessionSecret(): string {
   return secret;
 }
 
+export function ensureAuthSessionSecretConfigured(): void {
+  getSessionSecret();
+}
+
 export function normalizeUsername(username: string): string {
   return username.trim();
 }
