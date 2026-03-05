@@ -60,6 +60,12 @@ export default function Home() {
           isSavingTag={model.isSavingTag}
           resetFormForNewNarrative={model.resetFormForNewNarrative}
           toggleNarrativeTag={model.toggleNarrativeTag}
+          selectedAutoCallTypes={model.selectedAutoCallTypes}
+          autoGenerateInput={model.autoGenerateInput}
+          toggleAutoCallType={model.toggleAutoCallType}
+          setAutoGenerateField={model.setAutoGenerateField}
+          handleAutoGenerateNarrative={model.handleAutoGenerateNarrative}
+          handleDraftNarrativeCopy={model.handleDraftNarrativeCopy}
           handleNarrativeSubmit={model.handleNarrativeSubmit}
           handleTagSubmit={model.handleTagSubmit}
         />

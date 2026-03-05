@@ -4,6 +4,8 @@ import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react
 import type { Narrative, Tag } from "@/lib/types";
 import type {
   ApiError,
+  AutoCallType,
+  AutoGenerateInput,
   AuthResponse,
   NarrativeEditForm,
   NarrativeForm,
@@ -15,6 +17,7 @@ import type {
   TemplateView,
 } from "@/app/components/narratives/types";
 import {
+  buildNarrativeFromCallType,
   makeEditFormFromNarrative,
   makeEmptyForm,
   readJson,
@@ -46,6 +49,26 @@ export function useNarrativeManager() {
   const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
   const [unlockedPasswords, setUnlockedPasswords] = useState<Record<string, string>>({});
   const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null);
+  const [selectedAutoCallTypes, setSelectedAutoCallTypes] = useState<AutoCallType[]>([]);
+  const [autoGenerateInput, setAutoGenerateInput] = useState<AutoGenerateInput>({
+    unit: "",
+    age: "",
+    chiefComplaint: "",
+    origin: "",
+    destination: "",
+    gender: "",
+    originNurseName: "",
+    destinationNurseName: "",
+    reasonForTransport: "",
+    requiresAmbulanceTransport: "",
+    painScale: "",
+    codeStatus: "",
+    aoxStatus: "",
+    gcs: "",
+    pmhx: "",
+    transferMethod: "",
+    allergies: "",
+  });
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -160,6 +183,26 @@ export function useNarrativeManager() {
 
   function resetFormForNewNarrative() {
     setForm(makeEmptyForm());
+    setSelectedAutoCallTypes([]);
+    setAutoGenerateInput({
+      unit: "",
+      age: "",
+      chiefComplaint: "",
+      origin: "",
+      destination: "",
+      gender: "",
+      originNurseName: "",
+      destinationNurseName: "",
+      reasonForTransport: "",
+      requiresAmbulanceTransport: "",
+      painScale: "",
+      codeStatus: "",
+      aoxStatus: "",
+      gcs: "",
+      pmhx: "",
+      transferMethod: "",
+      allergies: "",
+    });
     setEditingCardNarrativeId(null);
     setEditingCardForm(null);
     setStatusMessage(null);
@@ -242,6 +285,48 @@ export function useNarrativeManager() {
     });
   }
 
+  function toggleAutoCallType(callType: AutoCallType) {
+    setSelectedAutoCallTypes((current) => {
+      if (current.includes(callType)) {
+        return current.filter((value) => value !== callType);
+      }
+
+      return [...current, callType];
+    });
+  }
+
+  function setAutoGenerateField(field: keyof AutoGenerateInput, value: string) {
+    setAutoGenerateInput((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleAutoGenerateNarrative() {
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    const result = buildNarrativeFromCallType(selectedAutoCallTypes, autoGenerateInput);
+
+    if (result.error) {
+      setErrorMessage(result.error);
+      return;
+    }
+
+    const autoTagIds = tags
+      .filter((tag) =>
+        selectedAutoCallTypes.some(
+          (callType) => tag.name.trim().toLowerCase() === callType.trim().toLowerCase(),
+        ),
+      )
+      .map((tag) => tag.id);
+
+    setForm((current) => ({
+      ...current,
+      title: current.title.trim() ? current.title : (result.title ?? current.title),
+      content: result.narrative ?? current.content,
+      tagIds: Array.from(new Set([...current.tagIds, ...autoTagIds])),
+    }));
+    setStatusMessage("Narrative generated from selected call type.");
+  }
+
   function toggleEditingCardTag(tagId: string) {
     setEditingCardForm((currentForm) => {
       if (!currentForm) {
@@ -313,6 +398,26 @@ export function useNarrativeManager() {
         ]),
       );
       setForm(makeEmptyForm());
+      setSelectedAutoCallTypes([]);
+      setAutoGenerateInput({
+        unit: "",
+        age: "",
+        chiefComplaint: "",
+        origin: "",
+        destination: "",
+        gender: "",
+        originNurseName: "",
+        destinationNurseName: "",
+        reasonForTransport: "",
+        requiresAmbulanceTransport: "",
+        painScale: "",
+        codeStatus: "",
+        aoxStatus: "",
+        gcs: "",
+        pmhx: "",
+        transferMethod: "",
+        allergies: "",
+      });
       setStatusMessage("Narrative template created.");
     } catch (error) {
       setErrorMessage(
@@ -564,6 +669,23 @@ export function useNarrativeManager() {
     }
   }
 
+  async function handleDraftNarrativeCopy() {
+    setErrorMessage(null);
+
+    const content = form.content.trim();
+    if (!content) {
+      setErrorMessage("Nothing to copy. Add narrative text first.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setStatusMessage("Draft narrative copied to clipboard.");
+    } catch {
+      setErrorMessage("Could not copy narrative to clipboard.");
+    }
+  }
+
   return {
     narratives,
     tags,
@@ -598,12 +720,17 @@ export function useNarrativeManager() {
     authMode,
     setAuthMode,
     copiedNarrativeId,
+    selectedAutoCallTypes,
+    autoGenerateInput,
     filteredNarratives,
     tagUsageCount,
     resetFormForNewNarrative,
     beginEditingNarrative,
     toggleNarrativeTag,
+    toggleAutoCallType,
     toggleEditingCardTag,
+    setAutoGenerateField,
+    handleAutoGenerateNarrative,
     handleNarrativeSubmit,
     handleInlineNarrativeSave,
     handleTagSubmit,
@@ -611,5 +738,6 @@ export function useNarrativeManager() {
     handleLogout,
     handleNarrativeDelete,
     handleNarrativeCopy,
+    handleDraftNarrativeCopy,
   };
 }

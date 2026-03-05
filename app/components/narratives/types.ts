@@ -51,3 +51,25 @@ export type NarrativeEditForm = {
 };
 
 export type TemplateView = "feed" | "mine";
+
+export type AutoGenerateInput = {
+  unit: string;
+  age: string;
+  chiefComplaint: string;
+  origin: string;
+  destination: string;
+  gender: string;
+  originNurseName: string;
+  destinationNurseName: string;
+  reasonForTransport: string;
+  requiresAmbulanceTransport: string;
+  painScale: string;
+  codeStatus: string;
+  aoxStatus: string;
+  gcs: string;
+  pmhx: string;
+  transferMethod: string;
+  allergies: string;
+};
+
+export type AutoCallType = "psych" | "cat" | "5150" | "5585" | "er" | "ift discharge" | "snf to snf";

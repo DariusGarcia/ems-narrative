@@ -1,40 +1,144 @@
-import type { Narrative, Tag } from "@/lib/types";
-import type { NarrativeEditForm, NarrativeForm } from "@/app/components/narratives/types";
+import type { Narrative, Tag } from '@/lib/types'
+import type {
+  AutoGenerateInput,
+  NarrativeEditForm,
+  NarrativeForm,
+} from '@/app/components/narratives/types'
 
 export function makeEmptyForm(): NarrativeForm {
   return {
-    title: "",
-    content: "",
+    title: '',
+    content: '',
     tagIds: [],
     isLocked: false,
-    lockPassword: "",
-  };
+    lockPassword: '',
+  }
 }
 
-export function makeEditFormFromNarrative(narrative: Narrative): NarrativeEditForm {
+export function makeEditFormFromNarrative(
+  narrative: Narrative,
+): NarrativeEditForm {
   return {
     title: narrative.title,
     content: narrative.content,
     tagIds: narrative.tags.map((tag) => tag.id),
-  };
+  }
 }
 
-export function sortNarrativesByUpdatedAt(narratives: Narrative[]): Narrative[] {
+export function sortNarrativesByUpdatedAt(
+  narratives: Narrative[],
+): Narrative[] {
   return [...narratives].sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-  );
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  )
 }
 
 export function sortTagsByName(tags: Tag[]): Tag[] {
   return [...tags].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-  );
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  )
 }
 
 export async function readJson<T>(response: Response): Promise<T> {
   try {
-    return (await response.json()) as T;
+    return (await response.json()) as T
   } catch {
-    return {} as T;
+    return {} as T
   }
+}
+
+const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender] [position] in [location]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
+
+AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies]. Patient reports a past history of [substance history].
+
+Patient transferred to the gurney via [transfer method] EMTx2 without incident. Placed in semifowlers to maintain airway patency. Restraints applied due to psych hold. PMSCs were assessed immediately before applying restraints, within five minutes after application, and every [pmsc interval] during transport, remaining intact throughout. A final PMSC check was performed immediately after removing the restraints. Vitals monitored en route and remained stable.
+
+Patient transported to [destination]. Upon arrival, patient was transferred to [location] via [transfer method] EMTx2 without incident. Report, transfer packet, and patient's belongings were handed off to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
+
+All times approximate.`
+
+const ER_IFT_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender] admitted for [CC]. Patient found in [position] in [location]. Report received from RN [nurse]. Patient is being transported to [destination] for [reason].
+
+Patient transported by ambulance due to [medical necessity]. AxOx[aox], GCS [gcs]. Isolation status: none. Code status: [code status]. PMHx of [pmhx]. Allergies: [allergies].
+
+Upon initial patient contact, patient was assessed and initial vitals obtained. Chief complaint of [CC]. Pain [pain]/10. Vitals monitored and remained stable for BLS transport.
+
+Patient transferred to the gurney via [transfer method] EMTx2 without incident. Patient placed in semifowlers with side rails up and safety straps secured. All vitals remained stable during transport.
+
+No medications administered during transport.
+
+Patient loaded into ambulance without incident. Patient closely monitored en route and arrived at destination with no significant change in status.
+
+Upon arrival at [destination], patient transferred from gurney to [location] via [transfer method] EMTx2 without incident and placed in semifowlers. Patient care transferred to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
+
+All times approximate.`
+
+function replaceTemplateFields(
+  template: string,
+  values: Record<string, string>,
+): string {
+  return template.replace(/\[([^\]]+)\]/g, (fullMatch, key) => {
+    const normalizedKey = String(key).trim().toLowerCase()
+    const replacement = values[normalizedKey]
+    return replacement && replacement.length > 0 ? replacement : fullMatch
+  })
+}
+
+export function buildNarrativeFromCallType(
+  selectedCallTypes: string[],
+  input: AutoGenerateInput,
+): { narrative?: string; title?: string; error?: string } {
+  const normalizedCallTypes = selectedCallTypes.map((value) =>
+    value.toLowerCase(),
+  )
+  const psychGroup = new Set(['psych', 'cat', '5150', '5585'])
+  const medicalGroup = new Set(['er', 'ift discharge', 'snf to snf'])
+
+  const includesPsychFamily = normalizedCallTypes.some((value) =>
+    psychGroup.has(value),
+  )
+  const includesMedicalFamily = normalizedCallTypes.some((value) =>
+    medicalGroup.has(value),
+  )
+
+  if (!includesPsychFamily && !includesMedicalFamily) {
+    return {
+      error: 'Select at least one call type to auto-generate a narrative.',
+    }
+  }
+
+  if (includesPsychFamily && includesMedicalFamily) {
+    return {
+      error:
+        'Choose either psych/CAT/5150/5585 call types OR ER/IFT discharge/SNF-to-SNF call types.',
+    }
+  }
+
+  const selectedTemplate = includesPsychFamily
+    ? PSYCH_TEMPLATE
+    : ER_IFT_TEMPLATE
+  const title = includesPsychFamily
+    ? 'Psych/CAT/5150 Transport'
+    : 'ER/IFT/SNF Transfer'
+
+  const narrative = replaceTemplateFields(selectedTemplate, {
+    unit: input.unit.trim(),
+    age: input.age.trim(),
+    cc: input.chiefComplaint.trim(),
+    origin: input.origin.trim(),
+    destination: input.destination.trim(),
+    gender: input.gender.trim(),
+    nurse: input.originNurseName.trim(),
+    "handoff nurse": input.destinationNurseName.trim(),
+    reason: input.reasonForTransport.trim(),
+    'medical necessity': input.requiresAmbulanceTransport.trim(),
+    aox: input.aoxStatus.trim(),
+    gcs: input.gcs.trim(),
+    pmhx: input.pmhx.trim(),
+    'transfer method': input.transferMethod.trim(),
+    allergies: input.allergies.trim(),
+  })
+
+  return { narrative, title }
 }

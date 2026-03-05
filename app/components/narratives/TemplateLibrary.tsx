@@ -54,10 +54,10 @@ export function TemplateLibrary({
   const [areFilterTagsMinimized, setAreFilterTagsMinimized] = useState(false)
 
   return (
-    <article className='rounded-2xl border border-slate-200 bg-surface p-5 shadow-md'>
+    <article className='rounded-2xl border border-slate-200 bg-surface p-3 shadow-md sm:p-4 lg:p-5'>
       <h2 className='text-lg font-semibold text-slate-900'>Template Library</h2>
 
-      <div className='sticky top-0 z-20 mt-3 bg-surface pb-2'>
+      <div className='sticky top-0 z-20 mt-2 bg-surface pb-2 sm:mt-3'>
         <div className='flex items-center gap-2'>
           <div className='relative min-w-0 flex-1'>
           <svg
@@ -90,7 +90,7 @@ export function TemplateLibrary({
         </div>
       </div>
 
-      <div className='mt-3 flex flex-wrap items-center gap-2'>
+      <div className='mt-2 flex flex-wrap items-center gap-2 sm:mt-3'>
         <button
           type='button'
           onClick={() => setSelectedFilterTagIds(() => [])}
@@ -133,7 +133,7 @@ export function TemplateLibrary({
           ))}
       </div>
 
-      <div className='mt-5 space-y-3'>
+      <div className='mt-3 space-y-2 pb-24 sm:mt-5 sm:space-y-3'>
         {isLoading && (
           <p className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600'>
             Loading templates...
@@ -173,11 +173,11 @@ export function TemplateLibrary({
                   Copied to clipboard
                 </div>
               )}
-              <div className='flex items-start justify-between gap-3'>
+              <div className='space-y-2'>
                 <h3 className='text-base font-semibold text-slate-900'>
                   {narrative.title}
                 </h3>
-                <div className='flex items-center gap-2'>
+                <div className='flex flex-wrap items-center gap-2'>
                   {narrative.owner_id && (
                     <span className='rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-800'>
                       Personal
