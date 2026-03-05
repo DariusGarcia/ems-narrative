@@ -48,13 +48,13 @@ export async function readJson<T>(response: Response): Promise<T> {
   }
 }
 
-const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender] [position] in [location]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
+const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. PT found in room []. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
 
 AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies].
 
 Patient transferred to the gurney via [transfer method] EMTx2 without incident. Placed in semifowlers to maintain airway patency. Restraints applied due to psych hold. PMSCs were assessed immediately before applying restraints, within five minutes after application, and every 15 during transport, remaining intact throughout. A final PMSC check was performed immediately after removing the restraints. Vitals monitored en route and remained stable.
 
-Patient transported to [destination]. Upon arrival, patient was transferred to [location] via [transfer method] EMTx2 without incident. Report, transfer packet, and patient's belongings were handed off to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
+Patient transported to [destination]. Upon arrival, patient was transferred to bed via [transfer method] EMTx2 without incident. Report, transfer packet, and patient's belongings were handed off to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
 
 All times approximate.`
 
@@ -119,13 +119,6 @@ export function buildNarrativeFromCallType(
   if (!includesPsychFamily && !includesMedicalFamily) {
     return {
       error: 'Select at least one call type to auto-generate a narrative.',
-    }
-  }
-
-  if (includesPsychFamily && includesMedicalFamily) {
-    return {
-      error:
-        'Choose either psych/CAT/5150/5585 call types OR ER/IFT discharge/SNF-to-SNF call types.',
     }
   }
 
