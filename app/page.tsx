@@ -16,6 +16,7 @@ type NarrativeWriteResponse = {
 
 type NarrativesResponse = {
   narratives: Narrative[]
+  user: SessionUser | null
   error?: string
 }
 
@@ -31,6 +32,16 @@ type TagsResponse = {
 }
 
 type ApiError = {
+  error?: string
+}
+
+type SessionUser = {
+  id: string
+  username: string
+}
+
+type AuthResponse = {
+  user: SessionUser
   error?: string
 }
 
@@ -104,6 +115,13 @@ export default function Home() {
   const [isSavingCardNarrative, setIsSavingCardNarrative] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+  const [templateView, setTemplateView] = useState<'feed' | 'mine'>('feed')
+  const [createTarget, setCreateTarget] = useState<'feed' | 'mine'>('feed')
+  const [authUsername, setAuthUsername] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null)
   const [unlockedPasswords, setUnlockedPasswords] = useState<
     Record<string, string>
   >({})
@@ -114,9 +132,10 @@ export default function Home() {
     setErrorMessage(null)
 
     try {
+      const scope = templateView === 'mine' ? 'mine' : 'feed'
       const [tagsResponse, narrativesResponse] = await Promise.all([
         fetch('/api/tags', { cache: 'no-store' }),
-        fetch('/api/narratives', { cache: 'no-store' }),
+        fetch(`/api/narratives?scope=${scope}`, { cache: 'no-store' }),
       ])
 
       const tagsPayload = await readJson<TagsResponse>(tagsResponse)
@@ -137,6 +156,11 @@ export default function Home() {
       setNarratives(
         sortNarrativesByUpdatedAt(narrativesPayload.narratives ?? []),
       )
+      setSessionUser(narrativesPayload.user ?? null)
+      if (!narrativesPayload.user) {
+        setTemplateView('feed')
+        setCreateTarget('feed')
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -146,7 +170,7 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [templateView])
 
   useEffect(() => {
     void loadData()
@@ -175,6 +199,18 @@ export default function Home() {
 
     return () => window.clearTimeout(timeoutId)
   }, [copiedNarrativeId])
+
+  useEffect(() => {
+    if (!statusMessage) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setStatusMessage((current) => (current === statusMessage ? null : current))
+    }, 2500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [statusMessage])
 
   const filteredNarratives = useMemo(() => {
     if (selectedFilterTagIds.length === 0) {
@@ -335,6 +371,7 @@ export default function Home() {
           tagIds: form.tagIds,
           isLocked: form.isLocked,
           lockPassword: form.lockPassword,
+          templateScope: createTarget,
         }),
       })
 
@@ -499,6 +536,65 @@ export default function Home() {
     }
   }
 
+  async function handleAuthSubmit(mode: 'login' | 'register') {
+    setStatusMessage(null)
+    setErrorMessage(null)
+
+    const username = authUsername.trim()
+    const password = authPassword
+
+    if (!username || !password) {
+      setErrorMessage('Username and password are required.')
+      return
+    }
+
+    setIsSubmittingAuth(true)
+
+    try {
+      const response = await fetch(`/api/auth/${mode}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const payload = await readJson<AuthResponse | ApiError>(response)
+
+      if (!response.ok || !('user' in payload)) {
+        throw new Error(payload.error ?? 'Authentication failed.')
+      }
+
+      setSessionUser(payload.user)
+      setTemplateView('mine')
+      setCreateTarget('mine')
+      setAuthPassword('')
+      setAuthMode(null)
+      setStatusMessage(mode === 'login' ? 'Signed in.' : 'Account created and signed in.')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Authentication failed.')
+    } finally {
+      setIsSubmittingAuth(false)
+    }
+  }
+
+  async function handleLogout() {
+    setStatusMessage(null)
+    setErrorMessage(null)
+
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setSessionUser(null)
+      setTemplateView('feed')
+      setCreateTarget('feed')
+      setAuthPassword('')
+      setAuthMode(null)
+      setStatusMessage('Signed out.')
+    } catch {
+      setErrorMessage('Failed to sign out.')
+    }
+  }
+
   async function handleNarrativeDelete(narrative: Narrative) {
     setStatusMessage(null)
     setErrorMessage(null)
@@ -589,6 +685,118 @@ export default function Home() {
         </p>
       </header>
 
+      <section className='rounded-2xl border border-slate-200 bg-surface p-4 shadow-sm'>
+        {sessionUser ? (
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div>
+              <p className='text-sm font-semibold text-slate-900'>
+                Signed in as {sessionUser.username}
+              </p>
+              <p className='text-xs text-slate-600'>
+                You can switch between main feed templates and your personal templates.
+              </p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={() => setTemplateView('feed')}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  templateView === 'feed'
+                    ? 'bg-slate-900 text-white'
+                    : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                }`}>
+                Main Feed
+              </button>
+              <button
+                type='button'
+                onClick={() => setTemplateView('mine')}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  templateView === 'mine'
+                    ? 'bg-cyan-700 text-white'
+                    : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                }`}>
+                My Templates
+              </button>
+              <button
+                type='button'
+                onClick={() => void handleLogout()}
+                className='rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50'>
+                Log out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className='space-y-3'>
+            <p className='text-sm font-semibold text-slate-900'>
+              Optional account for personal templates
+            </p>
+            <p className='text-xs text-slate-600'>
+              Without an account, you can still create and manage main feed templates.
+            </p>
+            {!authMode ? (
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  type='button'
+                  onClick={() => setAuthMode('login')}
+                  className='rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800'>
+                  Log in
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setAuthMode('register')}
+                  className='rounded-xl bg-cyan-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-600'>
+                  Create account
+                </button>
+              </div>
+            ) : (
+              <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
+                <p className='text-xs font-medium text-slate-700'>
+                  {authMode === 'login' ? 'Log in to your account' : 'Create a new account'}
+                </p>
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <input
+                    value={authUsername}
+                    onChange={(event) => setAuthUsername(event.target.value)}
+                    placeholder='username'
+                    className='min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+                  />
+                  <input
+                    type='password'
+                    value={authPassword}
+                    onChange={(event) => setAuthPassword(event.target.value)}
+                    placeholder='password'
+                    className='min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+                  />
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  <button
+                    type='button'
+                    disabled={isSubmittingAuth}
+                    onClick={() => void handleAuthSubmit(authMode)}
+                    className={`rounded-xl px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed ${
+                      authMode === 'login'
+                        ? 'bg-slate-900 hover:bg-slate-800 disabled:bg-slate-500'
+                        : 'bg-cyan-700 hover:bg-cyan-600 disabled:bg-cyan-400'
+                    }`}>
+                    {authMode === 'login' ? 'Log in' : 'Create account'}
+                  </button>
+                  <button
+                    type='button'
+                    disabled={isSubmittingAuth}
+                    onClick={() => {
+                      setAuthMode(null)
+                      setAuthPassword('')
+                    }}
+                    className='rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed'>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* <section className="rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
         Authentication is intentionally disabled for this first version. Anyone with app access can
         create, edit, and delete templates.
@@ -640,6 +848,34 @@ export default function Home() {
                 className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
               />
             </div>
+
+            {sessionUser && (
+              <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
+                <p className='text-sm font-medium text-slate-700'>Save destination</p>
+                <div className='flex flex-wrap gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => setCreateTarget('feed')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                      createTarget === 'feed'
+                        ? 'bg-slate-900 text-white'
+                        : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                    }`}>
+                    Main Feed
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => setCreateTarget('mine')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                      createTarget === 'mine'
+                        ? 'bg-cyan-700 text-white'
+                        : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                    }`}>
+                    My Templates
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
               <label className='flex items-center gap-2 text-sm font-medium text-slate-700'>
@@ -835,6 +1071,11 @@ export default function Home() {
                       {narrative.title}
                     </h3>
                     <div className='flex items-center gap-2'>
+                      {narrative.owner_id && (
+                        <span className='rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-800'>
+                          Personal
+                        </span>
+                      )}
                       {narrative.is_locked && (
                         <span className='rounded-lg border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900'>
                           Locked

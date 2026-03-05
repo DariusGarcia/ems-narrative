@@ -10,5 +10,6 @@ export type Narrative = {
   created_at: string;
   updated_at: string;
   is_locked: boolean;
+  owner_id: string | null;
   tags: Tag[];
 };

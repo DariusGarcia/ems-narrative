@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSessionUserFromRequest } from "@/lib/auth";
 import { hashLockPassword } from "@/lib/lockPassword";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -35,9 +36,10 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const supabase = getSupabaseAdmin();
+    const sessionUser = await getSessionUserFromRequest(request);
     const { data: narrative, error } = await supabase
       .from("narratives")
-      .select("id, is_locked, lock_password_hash")
+      .select("id, is_locked, lock_password_hash, owner_id")
       .eq("id", narrativeId)
       .maybeSingle();
 
@@ -47,6 +49,10 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!narrative) {
       return jsonError("Template not found.", 404);
+    }
+
+    if (narrative.owner_id && narrative.owner_id !== sessionUser?.id) {
+      return jsonError("You do not have permission to access this template.", 403);
     }
 
     if (!narrative.is_locked) {

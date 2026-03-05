@@ -4,6 +4,7 @@ import {
   NARRATIVE_SELECT,
   type NarrativeRow,
 } from "@/lib/narrativeData";
+import { getSessionUserFromRequest } from "@/lib/auth";
 import { hashLockPassword } from "@/lib/lockPassword";
 import { parseNarrativeWritePayload } from "@/lib/narrativePayload";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -80,10 +81,11 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const supabase = getSupabaseAdmin();
+    const sessionUser = await getSessionUserFromRequest(request);
 
     const { data: existingNarrative, error: existingNarrativeError } = await supabase
       .from("narratives")
-      .select("id, is_locked, lock_password_hash")
+      .select("id, is_locked, lock_password_hash, owner_id")
       .eq("id", narrativeId)
       .maybeSingle();
 
@@ -93,6 +95,10 @@ export async function PUT(request: Request, context: RouteContext) {
 
     if (!existingNarrative) {
       return jsonError("Narrative not found.", 404);
+    }
+
+    if (existingNarrative.owner_id && existingNarrative.owner_id !== sessionUser?.id) {
+      return jsonError("You do not have permission to edit this template.", 403);
     }
 
     if (
@@ -169,6 +175,7 @@ export async function DELETE(request: Request, context: RouteContext) {
 
   try {
     const supabase = getSupabaseAdmin();
+    const sessionUser = await getSessionUserFromRequest(request);
     const requestBody = (await request.text()).trim();
     let payload: { unlockPassword?: unknown } = {};
 
@@ -185,7 +192,7 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     const { data: existingNarrative, error: existingNarrativeError } = await supabase
       .from("narratives")
-      .select("id, is_locked, lock_password_hash")
+      .select("id, is_locked, lock_password_hash, owner_id")
       .eq("id", narrativeId)
       .maybeSingle();
 
@@ -195,6 +202,10 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     if (!existingNarrative) {
       return jsonError("Narrative not found.", 404);
+    }
+
+    if (existingNarrative.owner_id && existingNarrative.owner_id !== sessionUser?.id) {
+      return jsonError("You do not have permission to delete this template.", 403);
     }
 
     if (

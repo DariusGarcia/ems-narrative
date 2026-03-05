@@ -4,6 +4,7 @@ import {
   NARRATIVE_SELECT,
   type NarrativeRow,
 } from "@/lib/narrativeData";
+import { getSessionUserFromRequest } from "@/lib/auth";
 import { hashLockPassword, isValidLockPassword } from "@/lib/lockPassword";
 import { parseNarrativeWritePayload } from "@/lib/narrativePayload";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -38,14 +39,32 @@ async function validateTagIds(tagIds: string[]) {
   return { valid: true as const };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const sessionUser = await getSessionUserFromRequest(request);
     const supabase = getSupabaseAdmin();
+    const scope = new URL(request.url).searchParams.get("scope");
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("narratives")
       .select(NARRATIVE_SELECT)
       .order("updated_at", { ascending: false });
+
+    if (scope === "mine") {
+      if (!sessionUser) {
+        return NextResponse.json({ narratives: [], user: null });
+      }
+
+      query = query.eq("owner_id", sessionUser.id);
+    } else if (scope === "feed") {
+      query = query.is("owner_id", null);
+    } else if (sessionUser) {
+      query = query.or(`owner_id.is.null,owner_id.eq.${sessionUser.id}`);
+    } else {
+      query = query.is("owner_id", null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return jsonError("Failed to load narratives.", 500);
@@ -53,7 +72,7 @@ export async function GET() {
 
     const narratives = ((data ?? []) as NarrativeRow[]).map(mapNarrativeRow);
 
-    return NextResponse.json({ narratives });
+    return NextResponse.json({ narratives, user: sessionUser });
   } catch {
     return jsonError(
       "Supabase configuration is missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
@@ -80,12 +99,20 @@ export async function POST(request: Request) {
   const input = payload as { isLocked?: unknown; lockPassword?: unknown };
   const isLocked = input.isLocked === true;
   const lockPassword = typeof input.lockPassword === "string" ? input.lockPassword : "";
+  const templateScope = input as { templateScope?: unknown };
 
   if (isLocked && !isValidLockPassword(lockPassword)) {
     return jsonError("Lock password must be at least 4 characters.", 400);
   }
 
   try {
+    const sessionUser = await getSessionUserFromRequest(request);
+    const createMine = templateScope.templateScope === "mine";
+
+    if (createMine && !sessionUser) {
+      return jsonError("You must be signed in to create personal templates.", 401);
+    }
+
     const tagValidation = await validateTagIds(parsed.data.tagIds);
 
     if (!tagValidation.valid) {
@@ -101,6 +128,7 @@ export async function POST(request: Request) {
         content: parsed.data.content,
         is_locked: isLocked,
         lock_password_hash: isLocked ? hashLockPassword(lockPassword) : null,
+        owner_id: createMine ? sessionUser?.id ?? null : null,
       })
       .select("id")
       .single();
