@@ -83,12 +83,12 @@ export type AutoCallType =
   | 'W6000'
 
 export const AUTO_CALL_TYPE_OPTIONS: AutoCallType[] = [
-  'Psych to ER',
-  'CAT team',
   '5150',
   '5585',
+  'CAT team',
   'ER',
   'IFT Transfer',
-  'W6000',
+  'Psych to ER',
   'SNF to ER',
+  'W6000',
 ]

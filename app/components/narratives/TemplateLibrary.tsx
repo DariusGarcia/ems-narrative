@@ -282,7 +282,13 @@ export function TemplateLibrary({
                   </p>
 
                   <div className='mt-3 flex flex-wrap gap-2'>
-                    {narrative.tags.map((tag) => (
+                    {[...narrative.tags]
+                      .sort((a, b) =>
+                        a.name.localeCompare(b.name, undefined, {
+                          sensitivity: 'base',
+                        }),
+                      )
+                      .map((tag) => (
                       <span
                         key={`${narrative.id}-${tag.id}`}
                         className='rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700'>
