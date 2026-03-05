@@ -54,10 +54,10 @@ export function TemplateLibrary({
   const [areFilterTagsMinimized, setAreFilterTagsMinimized] = useState(false)
 
   return (
-    <article className='rounded-2xl border border-slate-200 bg-surface p-3 shadow-md sm:p-4 lg:p-5'>
+    <article className='p-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-surface sm:p-4 sm:shadow-md lg:p-5'>
       <h2 className='text-lg font-semibold text-slate-900'>Template Library</h2>
 
-      <div className='sticky top-0 z-20 mt-2 bg-surface pb-2 sm:mt-3'>
+      <div className='sticky top-0 z-20 mt-2 bg-transparent pb-2 sm:mt-3 sm:bg-surface'>
         <div className='flex items-center gap-2'>
           <div className='relative min-w-0 flex-1'>
           <svg
