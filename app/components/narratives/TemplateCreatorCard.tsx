@@ -227,7 +227,7 @@ export function TemplateCreatorCard({
               onChange={(event) =>
                 setAutoGenerateField('chiefComplaint', event.target.value)
               }
-              placeholder='Chief complaint'
+              placeholder='Chief complaint '
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
@@ -281,7 +281,7 @@ export function TemplateCreatorCard({
               onChange={(event) =>
                 setAutoGenerateField('reasonForTransport', event.target.value)
               }
-              placeholder='Reason for transport'
+              placeholder='Reason for transport (psych eval)'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
@@ -293,7 +293,7 @@ export function TemplateCreatorCard({
                   event.target.value,
                 )
               }
-              placeholder='Requires ambulance due to'
+              placeholder='Requires ambulance due to (bed confined)'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
@@ -311,7 +311,7 @@ export function TemplateCreatorCard({
               onChange={(event) =>
                 setAutoGenerateField('codeStatus', event.target.value)
               }
-              placeholder='Code status (DNR)'
+              placeholder='Code status (DNR or Full Code)'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
