@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { Tag } from "@/lib/types";
 import type { NarrativeForm, SessionUser, TemplateView } from "@/app/components/narratives/types";
@@ -37,20 +38,94 @@ export function TemplateCreatorCard({
   handleNarrativeSubmit,
   handleTagSubmit,
 }: Props) {
+  const shouldUseCollapsedCreator = () => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    const compactWidth = window.matchMedia("(max-width: 1279px)").matches;
+    const coarsePointerDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+    return compactWidth || coarsePointerDevice;
+  };
+
+  const [isMobileCollapsed, setIsMobileCollapsed] = useState(() => {
+    return shouldUseCollapsedCreator();
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const widthQuery = window.matchMedia("(max-width: 1279px)");
+    const pointerQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+
+    const onChange = () => {
+      setIsMobileCollapsed(shouldUseCollapsedCreator());
+    };
+
+    widthQuery.addEventListener("change", onChange);
+    pointerQuery.addEventListener("change", onChange);
+    return () => {
+      widthQuery.removeEventListener("change", onChange);
+      pointerQuery.removeEventListener("change", onChange);
+    };
+  }, []);
+
   return (
     <article className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-md">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-900">Create Narrative Template</h2>
-        <button
-          type="button"
-          onClick={resetFormForNewNarrative}
-          className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
-        >
-          New
-        </button>
+        <div className="flex items-center gap-2">
+          {!isMobileCollapsed && (
+            <button
+              type="button"
+              onClick={() => setIsMobileCollapsed(true)}
+              className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-900 lg:hidden"
+            >
+              Hide
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={resetFormForNewNarrative}
+            className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+          >
+            New
+          </button>
+        </div>
       </div>
 
-      <form className="mt-4 space-y-4" onSubmit={(event) => void handleNarrativeSubmit(event)}>
+      {isMobileCollapsed && (
+        <button
+          type="button"
+          onClick={() => setIsMobileCollapsed(false)}
+          className="relative mt-4 block w-full rounded-xl border-2 border-dashed border-cyan-300 bg-slate-50 p-8 text-center transition hover:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:hidden"
+        >
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+            className="mx-auto size-10 text-slate-500"
+          >
+            <path
+              d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="mt-3 block text-sm font-semibold text-slate-900">Add New Template</span>
+          <span className="mt-1 block text-xs text-slate-600">Tap to open template creator</span>
+        </button>
+      )}
+
+      <form
+        className={`mt-4 space-y-4 ${isMobileCollapsed ? "hidden lg:block" : "block"}`}
+        onSubmit={(event) => void handleNarrativeSubmit(event)}
+      >
         <div className="space-y-1">
           <label htmlFor="title" className="text-sm font-medium text-slate-700">
             Template title
@@ -179,7 +254,10 @@ export function TemplateCreatorCard({
         </button>
       </form>
 
-      <form className="mt-6 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => void handleTagSubmit(event)}>
+      <form
+        className={`mt-6 flex flex-col gap-2 sm:flex-row ${isMobileCollapsed ? "hidden lg:flex" : "flex"}`}
+        onSubmit={(event) => void handleTagSubmit(event)}
+      >
         <input
           type="text"
           value={newTagName}
