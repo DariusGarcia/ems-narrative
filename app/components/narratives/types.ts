@@ -1,75 +1,94 @@
-import type { Narrative, Tag } from "@/lib/types";
+import type { Narrative, Tag } from '@/lib/types'
 
 export type SessionUser = {
-  id: string;
-  username: string;
-};
+  id: string
+  username: string
+}
 
 export type NarrativeWriteResponse = {
-  narrative: Narrative;
-  error?: string;
-};
+  narrative: Narrative
+  error?: string
+}
 
 export type NarrativesResponse = {
-  narratives: Narrative[];
-  user: SessionUser | null;
-  error?: string;
-};
+  narratives: Narrative[]
+  user: SessionUser | null
+  error?: string
+}
 
 export type TagResponse = {
-  tag: Tag;
-  duplicate?: boolean;
-  error?: string;
-};
+  tag: Tag
+  duplicate?: boolean
+  error?: string
+}
 
 export type TagsResponse = {
-  tags: Tag[];
-  error?: string;
-};
+  tags: Tag[]
+  error?: string
+}
 
 export type ApiError = {
-  error?: string;
-};
+  error?: string
+}
 
 export type AuthResponse = {
-  user: SessionUser;
-  error?: string;
-};
+  user: SessionUser
+  error?: string
+}
 
 export type NarrativeForm = {
-  title: string;
-  content: string;
-  tagIds: string[];
-  isLocked: boolean;
-  lockPassword: string;
-};
+  title: string
+  content: string
+  tagIds: string[]
+  isLocked: boolean
+  lockPassword: string
+}
 
 export type NarrativeEditForm = {
-  title: string;
-  content: string;
-  tagIds: string[];
-};
+  title: string
+  content: string
+  tagIds: string[]
+}
 
-export type TemplateView = "feed" | "mine";
+export type TemplateView = 'feed' | 'mine'
 
 export type AutoGenerateInput = {
-  unit: string;
-  age: string;
-  chiefComplaint: string;
-  origin: string;
-  destination: string;
-  gender: string;
-  originNurseName: string;
-  destinationNurseName: string;
-  reasonForTransport: string;
-  requiresAmbulanceTransport: string;
-  painScale: string;
-  codeStatus: string;
-  aoxStatus: string;
-  gcs: string;
-  pmhx: string;
-  transferMethod: string;
-  allergies: string;
-};
+  unit: string
+  age: string
+  chiefComplaint: string
+  origin: string
+  destination: string
+  gender: string
+  originNurseName: string
+  destinationNurseName: string
+  reasonForTransport: string
+  requiresAmbulanceTransport: string
+  painScale: string
+  codeStatus: string
+  aoxStatus: string
+  gcs: string
+  pmhx: string
+  transferMethod: string
+  allergies: string
+}
 
-export type AutoCallType = "psych" | "cat" | "5150" | "5585" | "er" | "ift discharge" | "snf to snf";
+export type AutoCallType =
+  | 'Psych to ER'
+  | 'CAT team'
+  | '5150'
+  | '5585'
+  | 'ER'
+  | 'IFT Transfer'
+  | 'SNF to ER'
+  | 'W6000'
+
+export const AUTO_CALL_TYPE_OPTIONS: AutoCallType[] = [
+  'Psych to ER',
+  'CAT team',
+  '5150',
+  '5585',
+  'ER',
+  'IFT Transfer',
+  'W6000',
+  'SNF to ER',
+]

@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react'
 import type { FormEvent } from 'react'
 import type { Tag } from '@/lib/types'
+import { AUTO_CALL_TYPE_OPTIONS } from '@/app/components/narratives/types'
 import type {
   AutoCallType,
   AutoGenerateInput,
@@ -33,16 +34,6 @@ type Props = {
   handleNarrativeSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   handleTagSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
 }
-
-const AUTO_CALL_TYPE_OPTIONS: Array<{ id: AutoCallType; label: string }> = [
-  { id: 'psych', label: 'Psych' },
-  { id: 'cat', label: 'CAT' },
-  { id: '5150', label: '5150' },
-  { id: '5585', label: '5585' },
-  { id: 'er', label: 'ER' },
-  { id: 'ift discharge', label: 'IFT Discharge' },
-  { id: 'snf to snf', label: 'SNF to SNF' },
-]
 
 export function TemplateCreatorCard({
   sessionUser,
@@ -184,19 +175,19 @@ export function TemplateCreatorCard({
           </p>
           <div className='flex flex-wrap gap-2'>
             {AUTO_CALL_TYPE_OPTIONS.map((option) => {
-              const isSelected = selectedAutoCallTypes.includes(option.id)
+              const isSelected = selectedAutoCallTypes.includes(option)
 
               return (
                 <button
-                  key={option.id}
+                  key={option}
                   type='button'
-                  onClick={() => toggleAutoCallType(option.id)}
+                  onClick={() => toggleAutoCallType(option)}
                   className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                     isSelected
                       ? 'border-cyan-700 bg-cyan-100 text-cyan-900'
                       : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800'
                   }`}>
-                  {option.label}
+                  {option}
                 </button>
               )
             })}
@@ -360,7 +351,11 @@ export function TemplateCreatorCard({
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
           </div>
-
+          {selectedAutoCallTypes.length === 0 && (
+            <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
+              Select at least one call type to auto-generate a narrative.
+            </p>
+          )}
           <button
             type='button'
             onClick={handleAutoGenerateNarrative}
@@ -399,41 +394,6 @@ export function TemplateCreatorCard({
           </div>
         )}
 
-        <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
-          <label className='flex items-center gap-2 text-sm font-medium text-slate-700'>
-            <input
-              type='checkbox'
-              checked={form.isLocked}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  isLocked: event.target.checked,
-                  lockPassword: event.target.checked
-                    ? current.lockPassword
-                    : '',
-                }))
-              }
-              className='h-4 w-4 rounded border-slate-300'
-            />
-            Lock this template with a password
-          </label>
-
-          {form.isLocked && (
-            <input
-              type='text'
-              value={form.lockPassword}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  lockPassword: event.target.value,
-                }))
-              }
-              placeholder='Enter lock password (min 4 chars)'
-              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
-            />
-          )}
-        </div>
-
         <div className='space-y-1'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div className='flex flex-wrap items-center gap-2'>
@@ -442,11 +402,6 @@ export function TemplateCreatorCard({
                 className='text-sm font-medium text-slate-700'>
                 Narrative text
               </label>
-              {selectedAutoCallTypes.length === 0 && (
-                <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
-                  Select at least one call type to auto-generate a narrative.
-                </p>
-              )}
             </div>
             <button
               type='button'
@@ -498,7 +453,40 @@ export function TemplateCreatorCard({
             )}
           </div>
         </div>
+        <div className='space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3'>
+          <label className='flex items-center gap-2 text-sm font-medium text-slate-700'>
+            <input
+              type='checkbox'
+              checked={form.isLocked}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  isLocked: event.target.checked,
+                  lockPassword: event.target.checked
+                    ? current.lockPassword
+                    : '',
+                }))
+              }
+              className='h-4 w-4 rounded border-slate-300'
+            />
+            Lock this template with a password
+          </label>
 
+          {form.isLocked && (
+            <input
+              type='text'
+              value={form.lockPassword}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  lockPassword: event.target.value,
+                }))
+              }
+              placeholder='Enter lock password (min 4 chars)'
+              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            />
+          )}
+        </div>
         <button
           type='submit'
           disabled={isSavingNarrative}

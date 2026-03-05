@@ -52,11 +52,14 @@ const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]
 
 AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies].
 
-Patient transferred to the gurney via [transfer method] EMTx2 without incident. Placed in semifowlers to maintain airway patency. Restraints applied due to psych hold. PMSCs were assessed immediately before applying restraints, within five minutes after application, and every 15 during transport, remaining intact throughout. A final PMSC check was performed immediately after removing the restraints. Vitals monitored en route and remained stable.
+Patient transferred to the gurney via [transfer method] EMTx2 without incident. Placed in semifowlers to maintain airway patency. [restraint block]Vitals monitored en route and remained stable.
 
 Patient transported to [destination]. Upon arrival, patient was transferred to bed via [transfer method] EMTx2 without incident. Report, transfer packet, and patient's belongings were handed off to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
 
 All times approximate.`
+
+const PSYCH_RESTRAINT_BLOCK =
+  'Restraints applied due to psych hold. PMSCs were assessed immediately before applying restraints, within five minutes after application, and every 15 during transport, remaining intact throughout. A final PMSC check was performed immediately after removing the restraints. '
 
 const ER_IFT_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender] admitted for [CC]. Patient found in semifowlers in [location]. Report received from RN [nurse]. Patient is being transported to [destination] for [reason].
 
@@ -106,12 +109,27 @@ export function buildNarrativeFromCallType(
   const normalizedCallTypes = selectedCallTypes.map((value) =>
     value.toLowerCase(),
   )
-  const psychGroup = new Set(['psych', 'cat', '5150', '5585'])
-  const medicalGroup = new Set(['er', 'ift discharge', 'snf to snf'])
+  const psychGroup = new Set([
+    'psych to er',
+    'cat team',
+    'cat to er',
+    'cat call',
+    '5150',
+    '5585',
+    'w6000',
+  ])
+  const medicalGroup = new Set([
+    'er',
+    'ift transfer',
+    'snf to er',
+    'bls going to er',
+    'er discharge',
+  ])
 
   const includesPsychFamily = normalizedCallTypes.some((value) =>
     psychGroup.has(value),
   )
+  const includesW6000 = normalizedCallTypes.includes('w6000')
   const includesMedicalFamily = normalizedCallTypes.some((value) =>
     medicalGroup.has(value),
   )
@@ -140,6 +158,7 @@ export function buildNarrativeFromCallType(
     'handoff nurse': input.destinationNurseName.trim(),
     reason: input.reasonForTransport.trim(),
     'medical necessity': input.requiresAmbulanceTransport.trim(),
+    'restraint block': includesW6000 ? '' : PSYCH_RESTRAINT_BLOCK,
     pain: normalizePainScale(input.painScale),
     'code status': input.codeStatus.trim(),
     aox: input.aoxStatus.trim(),
