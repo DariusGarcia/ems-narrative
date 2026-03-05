@@ -99,6 +99,7 @@ export function TemplateCreatorCard({
   const [collapsedOverride, setCollapsedOverride] = useState<boolean | null>(
     null,
   )
+  const [isAutoGenerateMinimized, setIsAutoGenerateMinimized] = useState(false)
   const isMobileCollapsed = collapsedOverride ?? isCompactDevice
 
   return (
@@ -172,30 +173,43 @@ export function TemplateCreatorCard({
         </div>
 
         <div className='space-y-3 rounded-xl border border-cyan-200 bg-cyan-50/60 p-3'>
-          <p className='text-sm font-semibold text-slate-800'>
-            Auto-Generate by Call Type
-          </p>
-          <div className='flex flex-wrap gap-2'>
-            {AUTO_CALL_TYPE_OPTIONS.map((option) => {
-              const isSelected = selectedAutoCallTypes.includes(option)
-
-              return (
-                <button
-                  key={option}
-                  type='button'
-                  onClick={() => toggleAutoCallType(option)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                    isSelected
-                      ? 'border-cyan-700 bg-cyan-100 text-cyan-900'
-                      : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800'
-                  }`}>
-                  {option}
-                </button>
-              )
-            })}
+          <div className='flex items-center justify-between gap-2'>
+            <p className='text-sm font-semibold text-slate-800'>
+              Auto-Generate by Call Type
+            </p>
+            <button
+              type='button'
+              onClick={() =>
+                setIsAutoGenerateMinimized((current) => !current)
+              }
+              className='rounded-lg border border-cyan-300 bg-white px-3 py-1 text-xs font-medium text-cyan-800 transition hover:border-cyan-400'>
+              {isAutoGenerateMinimized ? 'Show' : 'Minimize'}
+            </button>
           </div>
 
-          <div className='grid gap-2 sm:grid-cols-2'>
+          {!isAutoGenerateMinimized && (
+            <>
+              <div className='flex flex-wrap gap-2'>
+                {AUTO_CALL_TYPE_OPTIONS.map((option) => {
+                  const isSelected = selectedAutoCallTypes.includes(option)
+
+                  return (
+                    <button
+                      key={option}
+                      type='button'
+                      onClick={() => toggleAutoCallType(option)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                        isSelected
+                          ? 'border-cyan-700 bg-cyan-100 text-cyan-900'
+                          : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800'
+                      }`}>
+                      {option}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className='grid gap-2 sm:grid-cols-2'>
             <input
               type='text'
               value={autoGenerateInput.unit}
@@ -352,18 +366,20 @@ export function TemplateCreatorCard({
               placeholder='Allergies'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
-          </div>
-          {selectedAutoCallTypes.length === 0 && (
-            <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
-              Select at least one call type to auto-generate a narrative.
-            </p>
+              </div>
+              {selectedAutoCallTypes.length === 0 && (
+                <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
+                  Select at least one call type to auto-generate a narrative.
+                </p>
+              )}
+              <button
+                type='button'
+                onClick={handleAutoGenerateNarrative}
+                className='w-full rounded-xl bg-cyan-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-600'>
+                Auto Generate Narrative
+              </button>
+            </>
           )}
-          <button
-            type='button'
-            onClick={handleAutoGenerateNarrative}
-            className='w-full rounded-xl bg-cyan-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-600'>
-            Auto Generate Narrative
-          </button>
         </div>
 
         {sessionUser && (

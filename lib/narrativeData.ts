@@ -70,6 +70,7 @@ export function mapNarrativeRow(row: NarrativeRow): Narrative {
     is_locked: row.is_locked,
     owner_id: row.owner_id,
     is_favorited: false,
+    favorite_count: 0,
     tags,
   };
 }

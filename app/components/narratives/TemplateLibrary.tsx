@@ -236,10 +236,10 @@ export function TemplateLibrary({
                 </div>
               )}
               <div className='space-y-2'>
-                <h3 className='text-base font-semibold text-slate-900'>
-                  {narrative.title}
-                </h3>
-                <div className='flex flex-wrap items-center gap-2'>
+                <div className='flex items-start justify-between gap-2'>
+                  <h3 className='text-base font-semibold text-slate-900'>
+                    {narrative.title}
+                  </h3>
                   <button
                     type='button'
                     onClick={(event) => {
@@ -267,13 +267,20 @@ export function TemplateLibrary({
                           : 'Add to favorites'
                         : 'Sign in to add favorites'
                     }
-                    className={`rounded-lg border px-2 py-1 text-xs font-medium transition ${
+                    className={`rounded-lg border px-2 py-1 text-base leading-none transition ${
                       narrative.is_favorited
                         ? 'border-amber-300 bg-amber-100 text-amber-900'
                         : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
                     } disabled:cursor-not-allowed disabled:opacity-60`}>
-                    {narrative.is_favorited ? '★ Favorited' : '☆ Favorite'}
+                    <span className='inline-flex items-center gap-1'>
+                      <span>{narrative.is_favorited ? '★' : '☆'}</span>
+                      <span className='text-xs font-semibold text-slate-700'>
+                        {narrative.favorite_count}
+                      </span>
+                    </span>
                   </button>
+                </div>
+                <div className='flex flex-wrap items-center gap-2'>
                   {narrative.owner_id && (
                     <span className='rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-800'>
                       Personal

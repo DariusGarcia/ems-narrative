@@ -724,7 +724,14 @@ export function useNarrativeManager() {
       setNarratives((current) =>
         current.map((narrative) =>
           narrative.id === narrativeId
-            ? { ...narrative, is_favorited: nextFavoritedState }
+            ? {
+                ...narrative,
+                is_favorited: nextFavoritedState,
+                favorite_count: Math.max(
+                  0,
+                  narrative.favorite_count + (nextFavoritedState ? 1 : -1),
+                ),
+              }
             : narrative,
         ),
       );

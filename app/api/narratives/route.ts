@@ -73,6 +73,27 @@ export async function GET(request: Request) {
     const narratives = ((data ?? []) as NarrativeRow[]).map(mapNarrativeRow);
     const narrativeIds = narratives.map((narrative) => narrative.id);
 
+    if (narrativeIds.length > 0) {
+      const { data: favoriteRows, error: favoriteRowsError } = await supabase
+        .from("narrative_favorites")
+        .select("narrative_id")
+        .in("narrative_id", narrativeIds);
+
+      if (favoriteRowsError) {
+        return jsonError("Failed to load favorite counts.", 500);
+      }
+
+      const favoriteCountByNarrativeId: Record<string, number> = {};
+      for (const row of favoriteRows ?? []) {
+        favoriteCountByNarrativeId[row.narrative_id] =
+          (favoriteCountByNarrativeId[row.narrative_id] ?? 0) + 1;
+      }
+
+      for (const narrative of narratives) {
+        narrative.favorite_count = favoriteCountByNarrativeId[narrative.id] ?? 0;
+      }
+    }
+
     if (sessionUser && narrativeIds.length > 0) {
       const { data: favorites, error: favoritesError } = await supabase
         .from("narrative_favorites")
