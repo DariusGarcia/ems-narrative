@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Narrative, Tag } from '@/lib/types'
 import type { NarrativeEditForm } from '@/app/components/narratives/types'
 
@@ -52,41 +52,73 @@ export function TemplateLibrary({
   handleInlineNarrativeSave,
 }: Props) {
   const [areFilterTagsMinimized, setAreFilterTagsMinimized] = useState(false)
+  const [isSearchSticky, setIsSearchSticky] = useState(false)
+  const stickySearchRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const updateStickyState = () => {
+      const element = stickySearchRef.current
+      if (!element) {
+        return
+      }
+
+      const elementTop = element.getBoundingClientRect().top
+      const computedTop = Number.parseFloat(
+        window.getComputedStyle(element).top || '0',
+      )
+      const isPinned =
+        window.scrollY > 0 && Math.abs(elementTop - computedTop) < 1
+      setIsSearchSticky(isPinned)
+    }
+
+    updateStickyState()
+    window.addEventListener('scroll', updateStickyState, { passive: true })
+    window.addEventListener('resize', updateStickyState)
+
+    return () => {
+      window.removeEventListener('scroll', updateStickyState)
+      window.removeEventListener('resize', updateStickyState)
+    }
+  }, [])
 
   return (
     <article className='p-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-surface sm:p-4 sm:shadow-md lg:p-5'>
       <h2 className='text-lg font-semibold text-slate-900'>Template Library</h2>
 
-      <div className='sticky top-0 z-20 mt-2 bg-transparent pb-2 sm:mt-3 sm:bg-surface'>
+      <div
+        ref={stickySearchRef}
+        className='sticky top-2 z-20 mt-2 bg-transparent pb-2 sm:top-3 sm:mt-3'>
         <div className='flex items-center gap-2'>
           <div className='relative min-w-0 flex-1'>
-          <svg
-            aria-hidden='true'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400'>
-            <path
-              d='M21 21l-4.35-4.35M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z'
-              strokeWidth={2}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-          </svg>
+            <svg
+              aria-hidden='true'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400'>
+              <path
+                d='M21 21l-4.35-4.35M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z'
+                strokeWidth={2}
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
           <input
             type='text'
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder='Search by title or tags...'
-            className='w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            className='w-full rounded-xl border border-slate-300 bg-slate-100 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
           />
           </div>
-          <button
-            type='button'
-            onClick={() => setAreFilterTagsMinimized((current) => !current)}
-            className='shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400'>
-            {areFilterTagsMinimized ? 'Show tags' : 'Hide tags'}
-          </button>
+          {!isSearchSticky && (
+            <button
+              type='button'
+              onClick={() => setAreFilterTagsMinimized((current) => !current)}
+              className='shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400'>
+              {areFilterTagsMinimized ? 'Show tags' : 'Hide tags'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -289,12 +321,12 @@ export function TemplateLibrary({
                         }),
                       )
                       .map((tag) => (
-                      <span
-                        key={`${narrative.id}-${tag.id}`}
-                        className='rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700'>
-                        #{tag.name}
-                      </span>
-                    ))}
+                        <span
+                          key={`${narrative.id}-${tag.id}`}
+                          className='rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700'>
+                          #{tag.name}
+                        </span>
+                      ))}
                   </div>
                 </>
               )}
