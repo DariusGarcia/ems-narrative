@@ -24,6 +24,7 @@ type Props = {
   isSavingNarrative: boolean
   isSavingTag: boolean
   errorMessage: string | null
+  isDraftCopyBannerVisible: boolean
   resetFormForNewNarrative: () => void
   toggleNarrativeTag: (tagId: string) => void
   selectedAutoCallTypes: AutoCallType[]
@@ -31,6 +32,7 @@ type Props = {
   toggleAutoCallType: (callType: AutoCallType) => void
   setAutoGenerateField: (field: keyof AutoGenerateInput, value: string) => void
   handleAutoGenerateNarrative: () => void
+  clearDraftCopyBanner: () => void
   handleDraftNarrativeCopy: () => void
   handleNarrativeSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   handleTagSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
@@ -48,6 +50,7 @@ export function TemplateCreatorCard({
   isSavingNarrative,
   isSavingTag,
   errorMessage,
+  isDraftCopyBannerVisible,
   resetFormForNewNarrative,
   toggleNarrativeTag,
   selectedAutoCallTypes,
@@ -55,6 +58,7 @@ export function TemplateCreatorCard({
   toggleAutoCallType,
   setAutoGenerateField,
   handleAutoGenerateNarrative,
+  clearDraftCopyBanner,
   handleDraftNarrativeCopy,
   handleNarrativeSubmit,
   handleTagSubmit,
@@ -248,11 +252,32 @@ export function TemplateCreatorCard({
             />
             <input
               type='text'
+              value={autoGenerateInput.roomLocationFoundIn}
+              onChange={(event) =>
+                setAutoGenerateField('roomLocationFoundIn', event.target.value)
+              }
+              placeholder='Room/location found in'
+              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            />
+            <input
+              type='text'
               value={autoGenerateInput.destination}
               onChange={(event) =>
                 setAutoGenerateField('destination', event.target.value)
               }
               placeholder='Destination location'
+              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            />
+            <input
+              type='text'
+              value={autoGenerateInput.destinationRoomDropOffLocation}
+              onChange={(event) =>
+                setAutoGenerateField(
+                  'destinationRoomDropOffLocation',
+                  event.target.value,
+                )
+              }
+              placeholder='Destination room/drop off location'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
@@ -366,6 +391,15 @@ export function TemplateCreatorCard({
               placeholder='Allergies'
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
+            <input
+              type='text'
+              value={autoGenerateInput.isolationPrecasutions}
+              onChange={(event) =>
+                setAutoGenerateField('isolationPrecasutions', event.target.value)
+              }
+              placeholder='Iso precautions'
+              className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
+            />
               </div>
               {selectedAutoCallTypes.length === 0 && (
                 <p className='rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800'>
@@ -429,16 +463,22 @@ export function TemplateCreatorCard({
             </button>
             <button
               type='button'
-              onClick={() =>
+              onClick={() => {
+                clearDraftCopyBanner()
                 setForm((current) => ({
                   ...current,
                   content: '',
                 }))
-              }
+              }}
               className='rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900'>
               Clear text
             </button>
           </div>
+          {isDraftCopyBannerVisible && (
+            <p className='rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800'>
+              Draft narrative copied to clipboard.
+            </p>
+          )}
           <textarea
             id='content'
             name='content'

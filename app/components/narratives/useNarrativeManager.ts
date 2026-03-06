@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Narrative, Tag } from "@/lib/types";
 import type {
   ApiError,
@@ -41,6 +41,7 @@ export function useNarrativeManager() {
   const [isSavingCardNarrative, setIsSavingCardNarrative] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDraftCopyBannerVisible, setIsDraftCopyBannerVisible] = useState(false);
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [templateView, setTemplateView] = useState<TemplateView>("feed");
   const [createTarget, setCreateTarget] = useState<TemplateView>("feed");
@@ -51,6 +52,7 @@ export function useNarrativeManager() {
   const [unlockedPasswords, setUnlockedPasswords] = useState<Record<string, string>>({});
   const [copiedNarrativeId, setCopiedNarrativeId] = useState<string | null>(null);
   const [favoritePendingIds, setFavoritePendingIds] = useState<Record<string, boolean>>({});
+  const draftCopyBannerTimeoutRef = useRef<number | null>(null);
   const [favoriteSignInPrompt, setFavoriteSignInPrompt] = useState<{
     visible: boolean;
     x: number;
@@ -66,7 +68,9 @@ export function useNarrativeManager() {
     age: "",
     chiefComplaint: "",
     origin: "",
+    roomLocationFoundIn: "",
     destination: "",
+    destinationRoomDropOffLocation: "",
     gender: "",
     originNurseName: "",
     destinationNurseName: "",
@@ -79,6 +83,7 @@ export function useNarrativeManager() {
     pmhx: "",
     transferMethod: "",
     allergies: "",
+    isolationPrecasutions: "",
   });
 
   const loadData = useCallback(async () => {
@@ -159,6 +164,14 @@ export function useNarrativeManager() {
   }, [statusMessage]);
 
   useEffect(() => {
+    return () => {
+      if (draftCopyBannerTimeoutRef.current !== null) {
+        window.clearTimeout(draftCopyBannerTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (errorMessage !== "Title and narrative text are both required.") {
       return;
     }
@@ -226,7 +239,9 @@ export function useNarrativeManager() {
       age: "",
       chiefComplaint: "",
       origin: "",
+      roomLocationFoundIn: "",
       destination: "",
+      destinationRoomDropOffLocation: "",
       gender: "",
       originNurseName: "",
       destinationNurseName: "",
@@ -239,9 +254,11 @@ export function useNarrativeManager() {
       pmhx: "",
       transferMethod: "",
       allergies: "",
+      isolationPrecasutions: "",
     });
     setEditingCardNarrativeId(null);
     setEditingCardForm(null);
+    clearDraftCopyBanner();
     setStatusMessage(null);
     setErrorMessage(null);
   }
@@ -441,7 +458,9 @@ export function useNarrativeManager() {
         age: "",
         chiefComplaint: "",
         origin: "",
+        roomLocationFoundIn: "",
         destination: "",
+        destinationRoomDropOffLocation: "",
         gender: "",
         originNurseName: "",
         destinationNurseName: "",
@@ -454,6 +473,7 @@ export function useNarrativeManager() {
         pmhx: "",
         transferMethod: "",
         allergies: "",
+        isolationPrecasutions: "",
       });
       setStatusMessage("Narrative template created.");
     } catch (error) {
@@ -761,6 +781,25 @@ export function useNarrativeManager() {
     setFavoriteSignInPrompt((current) => ({ ...current, visible: false }));
   }
 
+  function clearDraftCopyBanner() {
+    if (draftCopyBannerTimeoutRef.current !== null) {
+      window.clearTimeout(draftCopyBannerTimeoutRef.current);
+      draftCopyBannerTimeoutRef.current = null;
+    }
+    setIsDraftCopyBannerVisible(false);
+  }
+
+  function showDraftCopyBanner() {
+    if (draftCopyBannerTimeoutRef.current !== null) {
+      window.clearTimeout(draftCopyBannerTimeoutRef.current);
+    }
+    setIsDraftCopyBannerVisible(true);
+    draftCopyBannerTimeoutRef.current = window.setTimeout(() => {
+      setIsDraftCopyBannerVisible(false);
+      draftCopyBannerTimeoutRef.current = null;
+    }, 2000);
+  }
+
   async function handleDraftNarrativeCopy() {
     setErrorMessage(null);
 
@@ -772,7 +811,7 @@ export function useNarrativeManager() {
 
     try {
       await navigator.clipboard.writeText(content);
-      setStatusMessage("Draft narrative copied to clipboard.");
+      showDraftCopyBanner();
     } catch {
       setErrorMessage("Could not copy narrative to clipboard.");
     }
@@ -801,6 +840,7 @@ export function useNarrativeManager() {
     isSavingCardNarrative,
     statusMessage,
     errorMessage,
+    isDraftCopyBannerVisible,
     sessionUser,
     templateView,
     setTemplateView,
@@ -837,6 +877,7 @@ export function useNarrativeManager() {
     handleNarrativeFavoriteToggle,
     handleFavoriteRequiresSignIn,
     closeFavoriteSignInPrompt,
+    clearDraftCopyBanner,
     handleDraftNarrativeCopy,
   };
 }

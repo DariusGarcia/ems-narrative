@@ -48,7 +48,7 @@ export async function readJson<T>(response: Response): Promise<T> {
   }
 }
 
-const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. PT found in room []. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
+const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. PT found in room/location [location]. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
 
 AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies].
 
@@ -63,7 +63,7 @@ const PSYCH_RESTRAINT_BLOCK =
 
 const ER_IFT_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender] admitted for [CC]. Patient found in semifowlers in [location]. Report received from RN [nurse]. Patient is being transported to [destination] for [reason].
 
-Patient transported by ambulance due to [medical necessity]. AxOx[aox], GCS [gcs]. Isolation status: none. Code status: [code status]. PMHx of [pmhx]. Allergies: [allergies].
+Patient transported by ambulance due to [medical necessity]. AxOx[aox], GCS [gcs]. Isolation status: [isolation precautions]. Code status: [code status]. PMHx of [pmhx]. Allergies: [allergies].
 
 Upon initial patient contact, patient was assessed and initial vitals obtained. Chief complaint of [CC]. Pain [pain]/10. Vitals monitored and remained stable for BLS transport.
 
@@ -73,7 +73,7 @@ No medications administered during transport.
 
 Patient loaded into ambulance without incident. Patient closely monitored en route and arrived at destination with no significant change in status.
 
-Upon arrival at [destination], patient transferred from gurney to [location] via [transfer method] EMTx2 without incident and placed in semifowlers. Patient care transferred to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
+Upon arrival at [destination], patient transferred from gurney to [destination location] via [transfer method] EMTx2 without incident and placed in semifowlers. Patient care transferred to RN [handoff nurse]. Gurney and equipment were decontaminated and prepared for the next call.
 
 All times approximate.`
 
@@ -154,12 +154,15 @@ export function buildNarrativeFromCallType(
     age: input.age.trim(),
     cc: input.chiefComplaint.trim(),
     origin: input.origin.trim(),
+    location: input.roomLocationFoundIn.trim(),
+    'destination location': input.destinationRoomDropOffLocation.trim(),
     destination: input.destination.trim(),
     gender: input.gender.trim(),
     nurse: input.originNurseName.trim(),
     'handoff nurse': input.destinationNurseName.trim(),
     reason: input.reasonForTransport.trim(),
     'medical necessity': input.requiresAmbulanceTransport.trim(),
+    'isolation precautions': input.isolationPrecasutions.trim(),
     'restraint block': includesW6000 ? '' : PSYCH_RESTRAINT_BLOCK,
     pain: normalizePainScale(input.painScale),
     'code status': input.codeStatus.trim(),

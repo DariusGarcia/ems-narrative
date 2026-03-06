@@ -57,7 +57,9 @@ export type AutoGenerateInput = {
   age: string
   chiefComplaint: string
   origin: string
+  roomLocationFoundIn: string
   destination: string
+  destinationRoomDropOffLocation: string
   gender: string
   originNurseName: string
   destinationNurseName: string
@@ -70,6 +72,7 @@ export type AutoGenerateInput = {
   pmhx: string
   transferMethod: string
   allergies: string
+  isolationPrecasutions: string
 }
 
 export type AutoCallType =

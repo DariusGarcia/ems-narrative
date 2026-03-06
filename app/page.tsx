@@ -127,6 +127,7 @@ export default function Home() {
           isSavingNarrative={model.isSavingNarrative}
           isSavingTag={model.isSavingTag}
           errorMessage={model.errorMessage}
+          isDraftCopyBannerVisible={model.isDraftCopyBannerVisible}
           resetFormForNewNarrative={model.resetFormForNewNarrative}
           toggleNarrativeTag={model.toggleNarrativeTag}
           selectedAutoCallTypes={model.selectedAutoCallTypes}
@@ -134,6 +135,7 @@ export default function Home() {
           toggleAutoCallType={model.toggleAutoCallType}
           setAutoGenerateField={model.setAutoGenerateField}
           handleAutoGenerateNarrative={model.handleAutoGenerateNarrative}
+          clearDraftCopyBanner={model.clearDraftCopyBanner}
           handleDraftNarrativeCopy={model.handleDraftNarrativeCopy}
           handleNarrativeSubmit={model.handleNarrativeSubmit}
           handleTagSubmit={model.handleTagSubmit}
