@@ -427,6 +427,17 @@ export function TemplateCreatorCard({
               className='rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900'>
               Copy
             </button>
+            <button
+              type='button'
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  content: '',
+                }))
+              }
+              className='rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900'>
+              Clear text
+            </button>
           </div>
           <textarea
             id='content'
