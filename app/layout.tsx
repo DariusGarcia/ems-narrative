@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Frontline EMS Narrative Template Manager',
+  title: 'EMS Narrative Template Manager',
   description: 'Manage EMS narrative templates with tags.',
 }
 
