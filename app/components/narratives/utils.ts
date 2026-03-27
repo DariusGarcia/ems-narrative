@@ -48,9 +48,9 @@ export async function readJson<T>(response: Response): Promise<T> {
   }
 }
 
-const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]. Chief complaint of [CC]. Report, transfer packet received from RN [nurse]. PT found in room/location [location]. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
+const PSYCH_TEMPLATE = `Unit [unit] AOS at [origin] to find a [age] y/o [gender]. Chief complaint of [CC]. Report, transfer packet received from [origin clinician role] [nurse]. PT found in room/location [location]. Patient is being transported to [destination] for [reason]. Requires ambulance transport due to [medical necessity].
 
-AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies].
+AxOx[aox], GCS [gcs]. Vitals on scene: WNL for BLS transport. Pain [pain]/10. Isolation status: [isolation precautions]. Medical devices: none. PMHx of [pmhx]. Allergies: [allergies].
 
 Patient transferred to the gurney via [transfer method] EMTx2 without incident. Placed in semifowlers to maintain airway patency. [restraint block]Vitals monitored en route and remained stable.
 
@@ -131,6 +131,9 @@ export function buildNarrativeFromCallType(
   const includesPsychFamily = normalizedCallTypes.some((value) =>
     psychGroup.has(value),
   )
+  const usesCatOriginRole = normalizedCallTypes.some((value) =>
+    ['psych to er', '5150', '5585'].includes(value),
+  )
   const includesW6000 = normalizedCallTypes.includes('w6000')
   const includesMedicalFamily = normalizedCallTypes.some((value) =>
     medicalGroup.has(value),
@@ -159,6 +162,7 @@ export function buildNarrativeFromCallType(
     destination: input.destination.trim(),
     gender: input.gender.trim(),
     nurse: input.originNurseName.trim(),
+    'origin clinician role': usesCatOriginRole ? 'BHC I' : 'RN',
     'handoff nurse': input.destinationNurseName.trim(),
     reason: input.reasonForTransport.trim(),
     'medical necessity': input.requiresAmbulanceTransport.trim(),

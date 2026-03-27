@@ -63,6 +63,10 @@ export function TemplateCreatorCard({
   handleNarrativeSubmit,
   handleTagSubmit,
 }: Props) {
+  const shouldUseCatOriginPlaceholder = selectedAutoCallTypes.some((callType) =>
+    ['Psych to ER', '5150', '5585'].includes(callType),
+  )
+
   const shouldUseCollapsedCreator = () => {
     if (typeof window === 'undefined') {
       return false
@@ -295,7 +299,11 @@ export function TemplateCreatorCard({
               onChange={(event) =>
                 setAutoGenerateField('originNurseName', event.target.value)
               }
-              placeholder='Origin nurse name'
+              placeholder={
+                shouldUseCatOriginPlaceholder
+                  ? 'Origin CAT name'
+                  : 'Origin nurse name'
+              }
               className='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-cyan-300 transition focus:ring-2'
             />
             <input
